@@ -1,5 +1,7 @@
 <?php
 
+# MAKE SURE TO RENAME THIS FILE TO Config.php after you finish with your edits
+
 const DB_HOST = 'localhost';
 const DB_NAME = 'db';
 const DB_USER = 'root';
