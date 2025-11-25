@@ -1,0 +1,2 @@
+ALTER TABLE users ADD COLUMN fullname VARCHAR(255);
+ALTER TABLE users MODIFY COLUMN reset_token_expires VARCHAR(255);
