@@ -64,7 +64,7 @@ abstract class AbstractModel {
      * @return array
      */
     public function findBy(array $criteria, array $orderBy = [], $limit = null, $offset = null): mixed {
-        $cond =  implode(" AND ", array_map(
+        $cond =  implode(" OR ", array_map(
                     fn($key) => "$key = ?", 
                 array_keys($criteria)));
 
