@@ -320,6 +320,23 @@ $type->allowsNull()   // true
 - `setAccessible(true)` - Allow access to private/protected
 - `getValue($object)` - Get value from object
 - `setValue($object, $value)` - Set value on object
+- `hasDefaultValue()` - Check if property has default value
+- `getDefaultValue()` - Get the default value
+
+### Getting Default Values
+
+You can check if a property has a default value (e.g., `private int $count = 0;`):
+
+```php
+$property = $reflection->getProperty('count');
+
+if ($property->hasDefaultValue()) {
+    $default = $property->getDefaultValue();
+    echo "Default is: $default";
+}
+```
+
+**Important:** Always check `hasDefaultValue()` before calling `getDefaultValue()`, otherwise PHP will throw an error if no default exists.
 
 ### ReflectionType
 

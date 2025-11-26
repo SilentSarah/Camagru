@@ -43,7 +43,12 @@ class ModelParser {
                 continue; // Skip properties without type hints
             }
 
-            $columns[$name] = $this->phpTypeToSql($name, $type);
+            $defaultValue = null;
+            if ($property->hasDefaultValue()) {
+                $defaultValue = $property->getDefaultValue();
+            }
+
+            $columns[$name] = $this->phpTypeToSql($name, $type, $defaultValue);
         }
 
         return [
@@ -74,9 +79,10 @@ class ModelParser {
      * Convert PHP type to SQL type
      * @param string $propertyName
      * @param ReflectionType $type
+     * @param mixed $defaultValue
      * @return array
      */
-    private function phpTypeToSql(string $propertyName, ReflectionType $type): array {
+    private function phpTypeToSql(string $propertyName, ReflectionType $type, mixed $defaultValue = null): array {
         $nullable = $type->allowsNull();
         $typeName = $type instanceof ReflectionNamedType ? $type->getName() : 'mixed';
 
@@ -121,7 +127,8 @@ class ModelParser {
         return [
             'type' => $sqlType,
             'nullable' => $nullable,
-            'extra' => $extra
+            'extra' => $extra,
+            'default' => $defaultValue
         ];
     }
 

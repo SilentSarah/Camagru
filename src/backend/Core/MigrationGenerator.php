@@ -78,6 +78,10 @@ class MigrationGenerator {
             if (!empty($info['extra'])) {
                 $def .= " {$info['extra']}";
             }
+            if (array_key_exists('default', $info) && $info['default'] !== null) {
+                $defaultVal = $this->formatDefaultValue($info['default'], $info['type']);
+                $def .= " DEFAULT $defaultVal";
+            }
             $columnDefs[] = $def;
         }
 
@@ -115,6 +119,10 @@ class MigrationGenerator {
                 if (!$info['nullable']) {
                     $def .= " NOT NULL";
                 }
+                if (array_key_exists('default', $info) && $info['default'] !== null) {
+                    $defaultVal = $this->formatDefaultValue($info['default'], $info['type']);
+                    $def .= " DEFAULT $defaultVal";
+                }
                 $upStatements[] = "ALTER TABLE $tableName ADD COLUMN $name $def;";
                 $downStatements[] = "ALTER TABLE $tableName DROP COLUMN $name;";
             } else {
@@ -124,10 +132,14 @@ class MigrationGenerator {
                 $newType = strtoupper($info['type']);
                 
                 // Normalize types for comparison
-                if ($this->typesAreDifferent($existingType, $newType, $existing['full_type'], $info['type'])) {
+                if ($this->typesAreDifferent($existing, $info)) {
                     $def = "{$info['type']}";
                     if (!$info['nullable']) {
                         $def .= " NOT NULL";
+                    }
+                    if (array_key_exists('default', $info) && $info['default'] !== null) {
+                        $defaultVal = $this->formatDefaultValue($info['default'], $info['type']);
+                        $def .= " DEFAULT $defaultVal";
                     }
                     $upStatements[] = "ALTER TABLE $tableName MODIFY COLUMN $name $def;";
                     
@@ -166,17 +178,50 @@ class MigrationGenerator {
     /**
      * Check if types are different
      */
-    private function typesAreDifferent(string $dbType, string $modelType, string $fullDbType, string $fullModelType): bool {
-        // Normalize for comparison
-        $dbType = strtoupper(preg_replace('/\(.*\)/', '', $dbType));
-        $modelType = strtoupper(preg_replace('/\(.*\)/', '', $modelType));
+    /**
+     * Check if types or defaults are different
+     */
+    private function typesAreDifferent(array $dbColumn, array $modelColumn): bool {
+        $dbType = strtoupper(preg_replace('/\(.*\)/', '', $dbColumn['type']));
+        $modelType = strtoupper(preg_replace('/\(.*\)/', '', $modelColumn['type']));
         
         // Handle TINYINT as BOOLEAN
         if ($dbType === 'TINYINT' && $modelType === 'BOOLEAN') {
-            return false;
+            $dbType = 'BOOLEAN';
         }
-        
-        return $dbType !== $modelType;
+
+        if ($dbType !== $modelType) {
+            return true;
+        }
+
+        // Compare default values
+        $dbDefault = $dbColumn['default_value'];
+        $modelDefault = $modelColumn['default'];
+
+        // Normalize model default for comparison
+        if ($modelDefault !== null) {
+            if (is_bool($modelDefault)) {
+                $modelDefault = $modelDefault ? '1' : '0'; // MySQL stores bools as 1/0
+            } elseif (is_string($modelDefault)) {
+                // Remove quotes if present in DB default (MySQL sometimes adds them)
+                $modelDefault = (string)$modelDefault;
+            } else {
+                $modelDefault = (string)$modelDefault;
+            }
+        }
+
+        // Normalize DB default
+        if ($dbDefault !== null) {
+             // MySQL might return 'NULL' string for null default in some versions/configs, but usually returns null
+             // It might also return defaults as strings even for numbers
+        }
+
+        // Handle NULLs
+        if ($dbDefault === null && $modelDefault !== null) return true;
+        if ($dbDefault !== null && $modelDefault === null) return true;
+        if ($dbDefault === null && $modelDefault === null) return false;
+
+        return (string)$dbDefault !== (string)$modelDefault;
     }
 
     /**
@@ -185,5 +230,24 @@ class MigrationGenerator {
     private function slugify(string $text): string {
         $text = preg_replace('/[^a-z0-9]+/i', '_', strtolower($text));
         return trim($text, '_');
+    }
+
+    /**
+     * Format default value for SQL
+     * @param mixed $value
+     * @param string $type
+     * @return string
+     */
+    private function formatDefaultValue(mixed $value, string $type): string {
+        if (is_bool($value)) {
+            return $value ? 'TRUE' : 'FALSE';
+        }
+        if (is_string($value)) {
+            return "'$value'";
+        }
+        if (is_null($value)) {
+            return 'NULL';
+        }
+        return (string)$value;
     }
 }
