@@ -17,28 +17,28 @@
 require_once __DIR__ . "/../Core/AbstractModel.php";
 class User extends AbstractModel
 {
-    private ?int $id;
-    private ?string $username;
-    private ?string $email;
-    private ?string $password;
-    private ?string $fullname;
+    private ?int $id = null;
+    private ?string $username = null;
+    private ?string $email = null;
+    private ?string $password = null;
+    private ?string $fullname = null;
     private ?bool $is_verified = false;
     private ?string $verification_token = null;
     private ?string $reset_token = null;
     private ?string $reset_token_expires = null;
-    private ?string $created_at;
+    private ?string $created_at = null;
     
     public function __construct() {
         parent::__construct();
         $this->table = "users";
     }
 
-    public function getId(): int { return $this->id; }
-    public function getUsername(): string { return $this->username; }
-    public function getFullname(): string { return $this->fullname; }
-    public function getEmail(): string { return $this->email; }
-    public function getPassword(): string { return $this->password; }
-    public function isVerified(): bool { return $this->is_verified; }
+    public function getId(): ?int { return $this->id; }
+    public function getUsername(): ?string { return $this->username; }
+    public function getFullname(): ?string { return $this->fullname; }
+    public function getEmail(): ?string { return $this->email; }
+    public function getPassword(): ?string { return $this->password; }
+    public function isVerified(): ?bool { return $this->is_verified; }
     public function getVerificationToken(): ?string { return $this->verification_token; }
     public function getResetToken(): ?string { return $this->reset_token; }
     public function getResetTokenExpires(): ?string { return $this->reset_token_expires; }
@@ -66,17 +66,16 @@ class User extends AbstractModel
             'reset_token_expires' => $this->reset_token_expires,
             'created_at' => $this->created_at,
         ];
-        parent::update($this->id, $data);
+        parent::upsert($data);
     }
 
     /**
-     * Finds user by username and email, updates object properties when an existing user is found
-     * @param string $username
-     * @param string $email
+     * Finds user by username or email, updates object properties when an existing user is found
+     * @param array<string> $personalDetails columns that the find function will search for 
      * @return void
      */
-    public function findByPersonalDetails(string $username, string $email): void {
-        $data = $this->findBy(['username'=> $username, "email" => $email]);
+    public function findByPersonalDetails(...$personalDetails): void {
+        $data = $this->findBy([...$personalDetails]);
         if ($data) {
             $this->id = $data['id'];
             $this->username = $data['username'];
