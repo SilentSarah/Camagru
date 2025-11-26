@@ -28,7 +28,7 @@ class Middleware {
      * It's pretty experimental and not production ready
      * @param mixed $controller Controller name that will be instantiated
      * @param mixed $action endpoint (class method) related to the controller
-     * @param mixed $method Allowed HTTP method (GET, POST, PUT, DELETE)
+     * @param array $method Allowed HTTP method (GET, POST, PUT, DELETE)
      * @return void
      */
     public static function handle ($controller, $action, $method) {
@@ -40,7 +40,7 @@ class Middleware {
 
         $requested_method = $_SERVER["REQUEST_METHOD"];
 
-        if ($requested_method !== $method) {
+        if (!in_array($requested_method, $method)) {
             $response = new HttpResponse(405, "Method not allowed", ["error"=> "Method not allowed"]);
             $response->sendJson();
             return;
