@@ -64,26 +64,12 @@ function InjectAnchors() {
 
 async function Router() {
     const parentComp = document.body;
-    const route = routes.find(r => r.path === window.location.pathname);
+    const route = routes.find(r => r.path === window.location.pathname) ?? routes[routes.length - 1];
 
-    if (route) {
-        // Check if it's an auth page
-        const isAuthPage = AuthPages.includes(route.path);
-        
-        if (!isAuthPage) {
-            parentComp.innerHTML = '';
-            parentComp.appendChild(await route.component());
-        } else {
-            parentComp.innerHTML = '';
-            parentComp.appendChild(await route.component());
-        }
-        InjectAnchors();
-        document.title = "Camagru | " + route.title;
-    } else {
-        routes.find(r => r.path === '/404').component().then(html => {
-            parentComp.innerHTML = html;
-        });
-    }
+    parentComp.innerHTML = '';
+    parentComp.appendChild(await route.component());
+    InjectAnchors();
+    document.title = "Camagru | " + route.title;
 }
 
 export default Router

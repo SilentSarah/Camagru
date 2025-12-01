@@ -13,8 +13,10 @@
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
+import FetchCSRF from '../js/Csrf.js';
 
-export default function Register() {
+export default async function Register() {
+    const csrfToken = await FetchCSRF();
     const div = document.createElement('div');
     div.className = 'container mx-auto flex justify-center items-center min-h-screen text-white py-5';
     div.innerHTML = /*html*/`
@@ -81,6 +83,9 @@ export default function Register() {
         const response = await fetch('http://localhost:8000/index.php/register', {
             method: 'POST',
             credentials: 'include',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken
+            },
             body: formData
         });
         const result = await response.json();

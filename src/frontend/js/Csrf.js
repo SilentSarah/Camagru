@@ -9,14 +9,20 @@
  *  ░  ░  ░    ░   ▒     ░░   ░   ░   ▒    ░  ░░ ░
  * ░        ░  ░   ░           ░  ░ ░  ░  ░
  *                                       
- * File Created: Wednesday, 19th November 2025 3:09:21 pm
+ * File Created: Thursday, 27th November 2025 4:52:09 pm
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
-import Router from './js/Router.js';
-
-document.addEventListener('DOMContentLoaded', async () => {
-    window.onpopstate = async () => await Router();
-    window.onpageshow = async (e) => e.persisted && await Router();
-    await Router();
-});
+export default async function FetchCSRF() {
+    try {
+        const response = await fetch('http://localhost:8000/index.php/csrf' , {
+            method: 'GET',
+            credentials: 'include'
+        });
+        const data = await response.json();
+        return data.csrf_token;
+    } catch (error) {
+        console.error('Error fetching CSRF token:', error);
+        return null;
+    }
+}
