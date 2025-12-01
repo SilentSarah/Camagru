@@ -17,6 +17,7 @@
 require_once "Controllers/AuthController.php";
 require_once __DIR__ . "/../Core/HttpResponse.php";
 require_once __DIR__ . "/../Core/Cors.php";
+require_once __DIR__ . "/Csrf.php";
 
 /**
  * Custom built Middleware class by Sarah Hicham Meftah, Contains one static method handle <br />
@@ -31,7 +32,7 @@ class Middleware {
      * @param array $method Allowed HTTP method (GET, POST, PUT, DELETE)
      * @return void
      */
-    public static function handle ($controller, $action, $method) {
+    public static function handle ($controller, $action, $methods) {
         if (!method_exists($controller, $action)) {
             $response = new HttpResponse(404, "Not Found", ["error"=> "Not Found"]);
             $response->sendJson();
@@ -39,14 +40,25 @@ class Middleware {
         }
 
         $requested_method = $_SERVER["REQUEST_METHOD"];
+        
+        cors();
+        if ($requested_method === "OPTIONS") {
+            return;
+        }
 
-        if (!in_array($requested_method, $method)) {
+        if (!in_array($requested_method, $methods)) {
             $response = new HttpResponse(405, "Method not allowed", ["error"=> "Method not allowed"]);
             $response->sendJson();
             return;
         }
 
-        cors();
+        if (in_array($requested_method, ["POST", "PUT", "DELETE"]) &&
+            !verify_csrf_token($_SERVER["HTTP_X_CSRF_TOKEN"])) {
+            $response = new HttpResponse(401, "CSRF token is invalid", ["error"=> "CSRF token is invalid"]);
+            $response->sendJson();
+            return;
+        }
+
         $controller = new $controller();
         $controller->$action();
     }
