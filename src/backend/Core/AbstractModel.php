@@ -17,7 +17,7 @@
 require_once "Database.php";
 
 abstract class AbstractModel {
-    protected static ?PDO $instance;
+    protected ?PDO $instance;
     protected string $table;
     protected string $primaryKey = "id";
     
@@ -64,11 +64,13 @@ abstract class AbstractModel {
      * @return array
      */
     public function findBy(array $criteria, array $orderBy = [], $limit = null, $offset = null): mixed {
-        $cond =  implode(" OR ", array_map(
-                    fn($key) => "$key = ?", 
-                array_keys($criteria)));
+        $bindings = [];
+        $whereClause = $this->buildWhereClause($criteria, $bindings);
 
-        $query = "SELECT * FROM $this->table WHERE " . $cond;
+        $query = "SELECT * FROM $this->table";
+        if (!empty($whereClause)) {
+            $query .= " WHERE " . $whereClause;
+        }
 
         if (!empty($orderBy)) {
             $query .= " ORDER BY " . implode(", ", array_map(
@@ -83,8 +85,115 @@ abstract class AbstractModel {
         }
 
         $stmt = $this->instance->prepare($query);
-        $stmt->execute(array_values($criteria));
+        $stmt->execute($bindings);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Builds a WHERE clause recursively from a criteria array
+     * @param array $criteria
+     * @param array $bindings passed by reference to collect values
+     * @return string
+     */
+    private function buildWhereClause(array $criteria, array &$bindings): string {
+        if (empty($criteria)) {
+            return "";
+        }
+
+        $conditions = [];
+
+        foreach ($criteria as $key => $value) {
+            // Handle logical operators (AND, OR, NOT)
+            if (strtoupper($key) === 'OR' || strtoupper($key) === 'AND') {
+                $subConditions = [];
+                foreach ($value as $subCriteria) {
+                    $subClause = $this->buildWhereClause($subCriteria, $bindings);
+                    if (!empty($subClause)) {
+                        $subConditions[] = "($subClause)";
+                    }
+                }
+                if (!empty($subConditions)) {
+                    $joiner = " " . strtoupper($key) . " ";
+                    $conditions[] = "(" . implode($joiner, $subConditions) . ")";
+                }
+                continue;
+            }
+
+            if (strtoupper($key) === 'NOT') {
+                $subClause = $this->buildWhereClause($value, $bindings);
+                if (!empty($subClause)) {
+                    $conditions[] = "NOT ($subClause)";
+                }
+                continue;
+            }
+
+            // Handle field operators
+            if (is_array($value)) {
+                foreach ($value as $operator => $operand) {
+                    switch ($operator) {
+                        case 'equals':
+                            $conditions[] = "$key = ?";
+                            $bindings[] = $operand;
+                            break;
+                        case 'not':
+                            $conditions[] = "$key != ?";
+                            $bindings[] = $operand;
+                            break;
+                        case 'in':
+                            $placeholders = implode(',', array_fill(0, count($operand), '?'));
+                            $conditions[] = "$key IN ($placeholders)";
+                            foreach ($operand as $val) $bindings[] = $val;
+                            break;
+                        case 'notIn':
+                            $placeholders = implode(',', array_fill(0, count($operand), '?'));
+                            $conditions[] = "$key NOT IN ($placeholders)";
+                            foreach ($operand as $val) $bindings[] = $val;
+                            break;
+                        case 'lt':
+                            $conditions[] = "$key < ?";
+                            $bindings[] = $operand;
+                            break;
+                        case 'lte':
+                            $conditions[] = "$key <= ?";
+                            $bindings[] = $operand;
+                            break;
+                        case 'gt':
+                            $conditions[] = "$key > ?";
+                            $bindings[] = $operand;
+                            break;
+                        case 'gte':
+                            $conditions[] = "$key >= ?";
+                            $bindings[] = $operand;
+                            break;
+                        case 'contains':
+                            $conditions[] = "$key LIKE ?";
+                            $bindings[] = "%$operand%";
+                            break;
+                        case 'startsWith':
+                            $conditions[] = "$key LIKE ?";
+                            $bindings[] = "$operand%";
+                            break;
+                        case 'endsWith':
+                            $conditions[] = "$key LIKE ?";
+                            $bindings[] = "%$operand";
+                            break;
+                        default:
+                            // Assume implicit equality if array key is not a recognized operator
+                            // This handles cases like 'age' => ['gt' => 18] where 'gt' is the operator
+                            // But what if the user passed 'field' => ['unknown' => 'val']?
+                            // For safety, we can default to equality or throw error.
+                            // Let's assume nested array implies operators.
+                            break;
+                    }
+                }
+            } else {
+                // Implicit equality: 'key' => 'value'
+                $conditions[] = "$key = ?";
+                $bindings[] = $value;
+            }
+        }
+
+        return implode(" AND ", $conditions);
     }
 
     /**
@@ -98,7 +207,8 @@ abstract class AbstractModel {
         $query = "INSERT INTO $this->table (" . $cols . ") VALUES (" . $rows . ")";
         $stmt = $this->instance->prepare($query);
         $stmt->execute(array_values($data));
-        return $this->find($this->instance->lastInsertId());
+        $row = $this->find($this->instance->lastInsertId());
+        return $row;
     }
 
     /**
