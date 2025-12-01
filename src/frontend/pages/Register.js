@@ -14,6 +14,7 @@
  */
 
 import FetchCSRF from '../js/Csrf.js';
+import { showToast } from '../components/Toast.js';
 
 export default async function Register() {
     const csrfToken = await FetchCSRF();
@@ -90,9 +91,9 @@ export default async function Register() {
         });
         const result = await response.json();
         if (response.status === 200) {
-            alert("success")
+            showToast("Success, Please check your email to confirm your account", "success");
         } else {
-            alert(result.error);
+            showToast(result.error + ", Please try again later", "error");
         }
     };
 
