@@ -31,10 +31,17 @@ This directory contains educational materials explaining PHP concepts used in th
    - Prepared statements and SQL injection prevention
 
 4. **[PHP String Functions](./php-string-functions.md)**
+
    - String manipulation functions
    - Regular expressions basics
    - How we create migration names (slugify)
    - Building SQL statements
+
+5. **[Recursive Clause Builder](./php-clause-builder.md)**
+   - How to build a Prisma-style query builder
+   - Recursive logic explained with diagrams
+   - Operator mapping tables
+   - Handling logical operators (AND/OR)
    - String interpolation
 
 ## 🎯 How to Use These Guides
