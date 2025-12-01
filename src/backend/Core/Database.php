@@ -21,10 +21,10 @@ class Database {
     private function __construct()  {}
     public static function getInstance() {
         if (self::$instance === null) {
-            $host = DB_HOST;
-            $dbname = DB_NAME;
-            $username = DB_USER;
-            $password = DB_PASS;
+            $host = Config::DB_HOST;
+            $dbname = Config::DB_NAME;
+            $username = Config::DB_USER;
+            $password = Config::DB_PASS;
             $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
             try {
                 self::$instance = new PDO($dsn, $username, $password);

@@ -10,28 +10,16 @@
  *  ░  ░  ░    ░   ▒     ░░   ░   ░   ▒    ░  ░░ ░
  * ░        ░  ░   ░           ░  ░ ░  ░  ░
  *                                       
- * File Created: Thursday, 20th November 2025 4:50:17 pm
+ * File Created: Sunday, 30th November 2025 5:55:55 pm
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
-require_once "Core/init.php";
-require_once "Controllers/AuthController.php";
-require_once "Core/Middleware.php";
 
-use Controllers\AuthController;
+require_once __DIR__ ."/Config.php";
+require_once __DIR__ ."/Database.php";
+require_once __DIR__ ."/Validator.php";
 
-$routes = [
-    "/login" => [AuthController::class, "login", ["POST"]],
-    "/register" => [AuthController::class, "register", ["POST", "PUT"]],
-    "/csrf" => [AuthController::class, "csrf", ["GET"]],
-];
-
-$protected_routes = [
-    "/testAPI" => [AuthController::class, "testAPI", "GET"],
-];
-
-$method = $_SERVER['REQUEST_METHOD'];
-$path = $_SERVER['PATH_INFO'];
-
-[$controller, $action, $method] = $routes[$path];
-Middleware::handle($controller, $action, $method);
+session_start();
+Database::getInstance();
+Config::setValidatorVerifyFn("email", fn($value) => filter_var($value, FILTER_VALIDATE_EMAIL));
+Validator::getInstance(Config::$VALIDATION_RULES);

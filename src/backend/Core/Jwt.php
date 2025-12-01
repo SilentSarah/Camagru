@@ -15,7 +15,8 @@
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
-// Only suppoted HMAC Algorithms this php framework will support
+require_once __DIR__ . "/Config.php";
+
 const ALGOS = [
     "HS256" => "sha256",
     "HS384" => "sha384",
@@ -42,7 +43,7 @@ function convert_b64url_to_b64(string $b64url): string {
             str_replace("-", "+", $b64url));
 }
 
-function generate_jwt_token(string $algo, array $claims, string $secret): string {
+function generate_jwt_token(string $algo, array $claims): string {
     $header = [
         "alg" => $algo,
         "typ" => "JWT"
@@ -56,13 +57,13 @@ function generate_jwt_token(string $algo, array $claims, string $secret): string
 
     $token = $header64URL . "." . $payload64URL;
     
-    $signature = hash_hmac(ALGOS[$algo], $token, $secret, true);
+    $signature = hash_hmac(ALGOS[$algo], $token, Config::JWT_SECRET, true);
     $signature64URL = convert_b64_to_b64url(base64_encode($signature));
 
     return $token . "." . $signature64URL;
 }
 
-function verify_jwt_token(string $token, string $secret): bool {
+function verify_jwt_token(string $token): bool {
     $parts = explode(".", $token);
     if (count($parts) !== 3) {
         return false;
@@ -80,7 +81,7 @@ function verify_jwt_token(string $token, string $secret): bool {
     $algo = $header["alg"];
     $signingInput = $header64URL . "." . $payload64URL;
 
-    $expectedSignature = hash_hmac(ALGOS[$algo], $signingInput, $secret, true);
+    $expectedSignature = hash_hmac(ALGOS[$algo], $signingInput, Config::JWT_SECRET, true);
     $expectedSignature64URL = convert_b64_to_b64url(base64_encode($expectedSignature));
 
     return $signature64URL === $expectedSignature64URL;
