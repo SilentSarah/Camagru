@@ -54,6 +54,14 @@ class User extends AbstractModel
     public function setEmail(string $newemail): void { $this->email = $newemail; }
     public function setId(int $newid): void { $this->id = $newid; }
 
+    public function create(array $data): mixed { 
+        $row = parent::create($data);
+        foreach ($row as $key => $value) {
+            $this->$key = $value;
+        }
+        return $this;
+    }
+
     public function save(): void {
         $data = [
             'username' => $this->username,
@@ -74,8 +82,8 @@ class User extends AbstractModel
      * @param array<string> $personalDetails columns that the find function will search for 
      * @return void
      */
-    public function findByPersonalDetails(...$personalDetails): void {
-        $data = $this->findBy([...$personalDetails]);
+    public function findByPersonalDetails(array $personalDetails): void {
+        $data = $this->findBy($personalDetails);
         if ($data) {
             $this->id = $data['id'];
             $this->username = $data['username'];
