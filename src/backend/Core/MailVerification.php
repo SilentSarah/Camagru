@@ -62,7 +62,7 @@ function sendPasswordRecoveryEmail(User $user)
         "from" => Config::MAILGUN_SENDER_FROM,
         "to" => $user->getEmail(),
         "subject" => "Camagru - Reset your password",
-        "html" => sprintf(file_get_contents(Config::$RESET_PASSWORD_EMAIL), $rlink, $rlink, $rlink)
+        "html" => sprintf(Config::$RESET_PASSWORD_EMAIL, $rlink, $rlink, $rlink)
     ]);
     $request->fetch();
 }
