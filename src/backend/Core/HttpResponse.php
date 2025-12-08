@@ -35,3 +35,13 @@ class HttpResponse {
         echo $this->message . PHP_EOL;
     }
 }
+
+class HttpRedirect extends HttpResponse {
+    private int $code = 302;
+
+    public function __construct(string $url) {
+        parent::__construct($this->code, null, []);
+        header("Location: " . $url);
+        exit;
+    }
+}
