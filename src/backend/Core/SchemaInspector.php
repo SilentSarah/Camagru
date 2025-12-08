@@ -28,7 +28,7 @@ class SchemaInspector {
      * @return array
      */
     public function getAllTables(): array {
-        $dbName = DB_NAME;
+        $dbName = Config::DB_NAME;
         $stmt = $this->pdo->query("
             SELECT TABLE_NAME 
             FROM INFORMATION_SCHEMA.TABLES 
@@ -44,7 +44,7 @@ class SchemaInspector {
      * @return array
      */
     public function getTableSchema(string $tableName): array {
-        $dbName = DB_NAME;
+        $dbName = Config::DB_NAME;
         $stmt = $this->pdo->prepare("
             SELECT 
                 COLUMN_NAME as name,
@@ -78,7 +78,7 @@ class SchemaInspector {
      * @return array
      */
     public function getForeignKeys(string $tableName): array {
-        $dbName = DB_NAME;
+        $dbName = Config::DB_NAME;
         $stmt = $this->pdo->prepare("
             SELECT 
                 COLUMN_NAME as column_name,
