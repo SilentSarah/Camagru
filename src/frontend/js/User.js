@@ -1,3 +1,4 @@
+
 /*
  *   ██████  ▄▄▄       ██▀███   ▄▄▄       ██░ ██ 
  * ▒██    ▒ ▒████▄    ▓██ ▒ ██▒▒████▄    ▓██░ ██▒
@@ -9,27 +10,21 @@
  *  ░  ░  ░    ░   ▒     ░░   ░   ░   ▒    ░  ░░ ░
  * ░        ░  ░   ░           ░  ░ ░  ░  ░
  *                                       
- * File Created: Thursday, 27th November 2025 4:52:09 pm
+ * File Created: Tuesday, 2nd December 2025 6:41:49 pm
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
-import { showToast } from '../components/Toast.js';
-
 /**
- * Fetches the CSRF token from the server
- * @returns {Promise<String>} The CSRF token
+ * Simple User class based on the user object returned by the server
  */
-export default async function FetchCSRF() {
-    try {
-        const response = await fetch('http://localhost:8000/index.php/csrf' , {
-            method: 'GET',
-            credentials: 'include'
-        });
-        const data = await response.json();
-        return data.csrf_token;
-    } catch (error) {
-        console.error('Error fetching CSRF token:', error);
-        showToast("Couldn't fetch CSRF token, please refresh the page", "error");
-        return null;
+export default class User {
+    constructor() {
+        this.id = null;
+        this.username = null;
+        this.email = null;
+        this.fullname = null;
+        this.is_verified = false;
+        this.profile_picture_url = null;
+        this.created_at = null;
     }
 }

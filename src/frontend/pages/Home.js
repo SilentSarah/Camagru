@@ -13,7 +13,7 @@
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
-import Post from '../components/Post.js';
+import Post, { PostSkeleton } from '../components/Post.js';
 
 export default function Home() {
     const div = document.createElement('div');
@@ -27,50 +27,7 @@ export default function Home() {
     `;
 
     const feedContainer = div.querySelector('#feed-container');
-    
-    // We need to handle the fact that Post() might return a string (if not converted yet) or element (if converted).
-    // Since I am converting them all in this turn, I will assume Post will be converted to return an element.
-    // But to be safe and allow sequential execution without breakage:
-    
-    const posts = [
-        {
-            username: 'drpickle.phd',
-            avatar: 'https://ui-avatars.com/api/?name=Dr+Pickle&background=random',
-            time: '9h',
-            content: `
-                <div class="text-center">
-                    <i class="fa-solid fa-image text-6xl text-gray-700 mb-4"></i>
-                    <p class="text-gray-500">Post Content Placeholder</p>
-                </div>
-            `,
-            likes: '11K',
-            caption: 'not judging.. just saying 🙄',
-            commentCount: '429'
-        },
-        {
-            username: 'another_user',
-            avatar: 'https://ui-avatars.com/api/?name=Another+User&background=random',
-            time: '2h',
-            content: `
-                <div class="text-center">
-                    <i class="fa-solid fa-video text-6xl text-gray-700 mb-4"></i>
-                    <p class="text-gray-500">Video Content Placeholder</p>
-                </div>
-            `,
-            likes: '532',
-            caption: 'Beautiful day! ☀️',
-            commentCount: '12'
-        }
-    ];
-
-    posts.forEach(postData => {
-        const postContent = Post(postData);
-        if (typeof postContent === 'string') {
-            feedContainer.insertAdjacentHTML('beforeend', postContent);
-        } else {
-            feedContainer.appendChild(postContent);
-        }
-    });
+    for (let i = 0; i < 2; i++) feedContainer.appendChild(PostSkeleton());
 
     return div;
 }

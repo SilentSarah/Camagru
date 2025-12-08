@@ -17,10 +17,13 @@ import FetchCSRF from '../js/Csrf.js';
 import { showToast } from '../components/Toast.js';
 
 export default async function Register() {
-    const csrfToken = await FetchCSRF();
-    const div = document.createElement('div');
-    div.className = 'container mx-auto flex justify-center items-center min-h-screen text-white py-5';
-    div.innerHTML = /*html*/`
+    let csrfToken = await FetchCSRF();
+    let renderedResult = document.createElement('div');
+    renderedResult.className = 'container mx-auto flex justify-center items-center min-h-screen text-white py-5';
+
+    const registerPage = document.createElement('div');
+    registerPage.className = 'flex flex-col items-center justify-center w-full';
+    registerPage.innerHTML = /*html*/`
         <div class="flex flex-col items-center justify-center w-full" style="max-width: 350px;">
 
             <!-- Main Register Box -->
@@ -76,26 +79,62 @@ export default async function Register() {
 
         </div>
     `;
+    const confirmationPage = document.createElement('div');
+    confirmationPage.className = 'container mx-auto flex justify-center items-center min-h-screen text-white py-5';
+    confirmationPage.innerHTML = /*html*/`
+        <div class="flex flex-col items-center justify-center w-full" style="max-width: 350px;">
+            <div class="p-4 w-full mb-3 flex flex-col items-center bg-black border border-gray-700 text-center">
+                <img src="/public/Camagru.svg" class="object-cover mb-3" style="width: 12rem;" alt="Camagru Logo" />
+                <h2 class="text-xl font-bold mb-3">Registration Successful!</h2>
+                <p class="text-gray-400 mb-4">
+                    Thank you for registering. Please check your email to confirm your account and activate it.
+                </p>
+                <a href="/signin" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full no-underline block text-center">
+                    Go to Login
+                </a>
+            </div>
+        </div>
+    `;
 
-    const form = div.querySelector('#register-form');
+    const loadingPage = document.createElement('div');
+    loadingPage.className = 'container mx-auto flex justify-center items-center min-h-screen text-white py-5';
+    loadingPage.innerHTML = /*html*/`
+        <div class="flex flex-col items-center justify-center w-full" style="max-width: 350px;">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+    `;
+    
+    const form = registerPage.querySelector('#register-form');
     form.onsubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(form);
-        const response = await fetch('http://localhost:8000/index.php/register', {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-                'X-CSRF-TOKEN': csrfToken
-            },
-            body: formData
-        });
-        const result = await response.json();
-        if (response.status === 200) {
-            showToast("Success, Please check your email to confirm your account", "success");
-        } else {
-            showToast(result.error + ", Please try again later", "error");
+        renderedResult.replaceChild(loadingPage, registerPage);
+        try {
+            const response = await fetch('http://localhost:8000/index.php/register', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: formData
+            });
+            if (response.status === 201) {
+                showToast("Account registered successfully", "success");
+                renderedResult.replaceChild(confirmationPage, loadingPage);
+            } else {
+                const data = await response.json();
+                showToast(data.error, "error");
+                renderedResult.replaceChild(registerPage, loadingPage);
+            }
+        } catch (error) {
+            console.log(error);
+            showToast("An error occurred, Please try again later", "error");
+            renderedResult.replaceChild(registerPage, loadingPage);
+        } finally {
+            csrfToken = await FetchCSRF();
         }
     };
 
-    return div;
+    renderedResult.appendChild(registerPage);
+    return renderedResult;
 }
