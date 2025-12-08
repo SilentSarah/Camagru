@@ -76,6 +76,34 @@ class Validator {
         return $errors;
     }
 
+    public function validateField(string $key, array $data): array {
+        $errors = [];
+        foreach ($this->rules[$key] as $rule => $value) {
+            if ($rule === "required" && empty($data[$key])) {
+                $errors[] = sprintf(messages[$rule], $key);
+            } 
+            elseif ($rule === "minlength" && strlen($data[$key]) < $value) {
+                $errors[] = sprintf(messages[$rule], $key, $value);
+            } 
+            elseif ($rule === "maxlength" && strlen($data[$key]) > $value) {
+                $errors[] = sprintf(messages[$rule], $key, $value);
+            } 
+            elseif ($rule === "symbols" && $value && !preg_match('/[^A-Za-z0-9]/', $data[$key])) {
+                $errors[] = sprintf(messages[$rule], $key);
+            } 
+            elseif ($rule === "includeAlpha" && $value && !preg_match('/[A-Za-z]/', $data[$key])) {
+                $errors[] = sprintf(messages[$rule], $key);
+            } 
+            elseif ($rule === "includeNumber" && $value && !preg_match('/[0-9]/', $data[$key])) {
+                $errors[] = sprintf(messages[$rule], $key);
+            } 
+            elseif ($rule === "verify" && $value($data[$key]) === false) {
+                $errors[] = sprintf(messages[$rule], $key);
+            }
+        }
+        return $errors;
+    }
+
     public static function getInstance(?array $rules = null): Validator {
         if (self::$instance === null) {
             self::$instance = new Validator($rules);
