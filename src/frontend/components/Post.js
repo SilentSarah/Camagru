@@ -69,3 +69,43 @@ export default function Post({ username, avatar, time, content, likes, caption, 
     `;
     return div;
 }
+
+export function PostSkeleton() {
+    const div = document.createElement('div');
+    div.className = 'border-b border-gray-800 pb-4 mb-4 animate-pulse';
+    div.innerHTML = /*html*/`
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-3">
+                <div class="rounded-full bg-gray-800 w-8 h-8"></div>
+                <div class="flex flex-col gap-2">
+                    <div class="h-3 bg-gray-800 rounded w-24"></div>
+                    <div class="h-2 bg-gray-800 rounded w-12"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="rounded-sm overflow-hidden border border-gray-800 mb-3 bg-gray-900 aspect-[4/5]"></div>
+
+        <!-- Actions -->
+        <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-4">
+                <div class="w-6 h-6 bg-gray-800 rounded-full"></div>
+                <div class="w-6 h-6 bg-gray-800 rounded-full"></div>
+                <div class="w-6 h-6 bg-gray-800 rounded-full"></div>
+            </div>
+            <div class="w-6 h-6 bg-gray-800 rounded-full"></div>
+        </div>
+
+        <!-- Likes -->
+        <div class="h-3 bg-gray-800 rounded w-20 mb-2"></div>
+
+        <!-- Caption -->
+        <div class="space-y-2 mb-2">
+            <div class="h-3 bg-gray-800 rounded w-3/4"></div>
+            <div class="h-3 bg-gray-800 rounded w-1/2"></div>
+        </div>
+    `;
+    return div;
+}

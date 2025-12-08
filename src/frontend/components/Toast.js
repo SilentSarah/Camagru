@@ -1,8 +1,22 @@
 /*
+ *   ██████  ▄▄▄       ██▀███   ▄▄▄       ██░ ██ 
+ * ▒██    ▒ ▒████▄    ▓██ ▒ ██▒▒████▄    ▓██░ ██▒
+ * ░ ▓██▄   ▒██  ▀█▄  ▓██ ░▄█ ▒▒██  ▀█▄  ▒██▀▀██░
+ *   ▒   ██▒░██▄▄▄▄██ ▒██▀▀█▄  ░██▄▄▄▄██ ░▓█ ░██ 
+ * ▒██████▒▒ ▓█   ▓██▒░██▓ ▒██▒ ▓█   ▓██▒░▓█▒░██▓
+ * ▒ ▒▓▒ ▒ ░ ▒▒   ▓▒█░░ ▒▓ ░▒▓░ ▒▒   ▓▒█░ ▒ ░░▒░▒
+ * ░ ░▒  ░ ░  ▒   ▒▒ ░  ░▒ ░ ▒░  ▒   ▒▒ ░ ▒ ░▒░ ░
+ *  ░  ░  ░    ░   ▒     ░░   ░   ░   ▒    ░  ░░ ░
+ * ░        ░  ░   ░           ░  ░ ░  ░  ░
+ *                                       
+ * File Created: Monday, 1st December 2025 12:57:04 pm
+ * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
+ */
+
+/*
  * Toast Component
  * Displays a toast notification with support for presets and custom icons.
  */
-
 const ToastContainerId = 'toast-container';
 
 function getToastContainer() {

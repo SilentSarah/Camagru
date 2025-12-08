@@ -13,6 +13,8 @@
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
+import { goTo } from "../js/Utils.js";
+
 
 export default function Sidebar() {
     const div = document.createElement('div');
@@ -45,7 +47,6 @@ export default function Sidebar() {
             <a href="#" class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-900 transition-colors whitespace-nowrap">
                 <div class="relative">
                     <i class="fa-brands fa-facebook-messenger text-xl w-6 text-center"></i>
-                    <span class="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full w-4 h-4 flex items-center justify-center">2</span>
                 </div>
                 <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300">Messages</span>
             </a>
@@ -66,11 +67,16 @@ export default function Sidebar() {
         </nav>
 
         <div class="p-2 mt-auto">
-            <a href="#" class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-900 transition-colors whitespace-nowrap">
-                <i class="fa-solid fa-bars text-xl w-6 text-center"></i>
-                <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300">More</span>
-            </a>
+            <button id="sign-out" class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-900 transition-colors whitespace-nowrap">
+                <i class="fa-solid fa-right-from-bracket text-xl w-6 text-center"></i>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300">Sign Out</span>
+            </button>
         </div>
     `;
+
+    div.querySelector('#sign-out').onclick = () => {
+        document.cookie = "session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
+        goTo("/signin");
+    }
     return div;
 }
