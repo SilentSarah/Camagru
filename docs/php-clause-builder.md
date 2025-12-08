@@ -2,7 +2,7 @@
 
 This guide explains how to implement a flexible, recursive SQL `WHERE` clause builder in PHP, similar to how Prisma ORM works. This allows you to build complex database queries using structured arrays.
 
-## 🧠 The Concept (Mind Map)
+## The Concept (Mind Map)
 
 The core idea is to treat the criteria array as a tree structure that we traverse recursively.
 
@@ -72,7 +72,7 @@ We want to transform a PHP array into a SQL string.
 We map specific array keys to SQL operators.
 
 | Operator Key | SQL Operator | Example Input                         | Example SQL          |
-| :----------- | :----------- | :------------------------------------ | :------------------- |
+|:------------ |:------------ |:------------------------------------- |:-------------------- |
 | `equals`     | `=`          | `['age' => ['equals' => 25]]`         | `age = 25`           |
 | `not`        | `!=`         | `['status' => ['not' => 'banned']]`   | `status != 'banned'` |
 | `gt`         | `>`          | `['price' => ['gt' => 100]]`          | `price > 100`        |
