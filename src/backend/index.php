@@ -18,20 +18,25 @@ require_once "Core/init.php";
 require_once "Controllers/AuthController.php";
 require_once "Core/Middleware.php";
 
-use Controllers\AuthController;
-
 $routes = [
-    "/login" => [AuthController::class, "login", ["POST"]],
-    "/register" => [AuthController::class, "register", ["POST", "PUT"]],
-    "/csrf" => [AuthController::class, "csrf", ["GET"]],
-];
-
-$protected_routes = [
-    "/testAPI" => [AuthController::class, "testAPI", "GET"],
+    "/login" => [AuthController::class, "login", ["POST"], false],
+    "/register" => [AuthController::class, "register", ["POST", "PUT"], false],
+    "/csrf" => [AuthController::class, "csrf", ["GET"], false],
+    "/verify-account" => [AuthController::class, "verify_account", ["POST"], false],
+    "/request-verification" => [AuthController::class, "request_verification", ["POST"], false],
+    "/password-recovery" => [AuthController::class, "request_password_recovery", ["POST"], false],
+    "/reset-password" => [AuthController::class, "reset_password", ["POST", "GET"], false],
+    "/user" => [AuthController::class, "user", ["GET"], true],
 ];
 
 $method = $_SERVER['REQUEST_METHOD'];
 $path = $_SERVER['PATH_INFO'];
 
-[$controller, $action, $method] = $routes[$path];
-Middleware::handle($controller, $action, $method);
+if (!array_key_exists($path, $routes)) {
+    $response = new HttpResponse(404, "Not Found", ["error" => "Not Found"]);
+    $response->sendJson();
+    return;
+}
+
+[$controller, $action, $methods, $is_protected] = $routes[$path];
+Middleware::handle($controller, $action, $methods, $is_protected);
