@@ -17,41 +17,69 @@
 import Home from '../pages/Home.js';
 import Login from '../pages/Login.js';
 import Register from '../pages/Register.js';
-import About from '../pages/About.js';
-import Sidebar from '../components/Sidebar.js';
 import Error from '../pages/Error.js';
+import Verify from '../pages/Verify.js';
+import PasswordRecovery from '../pages/PasswordRecovery.js';
+import ResetPassword from '../pages/ResetPassword.js';
+import { useUser, user } from './Auth.js';
+import { goTo } from './Utils.js';
+import Sidebar from '../components/Sidebar.js';
 
 export const routes = [
     {
         path: '/signin',
         title: 'Sign In',
+        protected: false,
         component: Login
-    },
-    {
-        path: '/',
-        title: 'Home',
-        component: Home
     },
     {
         path: '/signup',
         title: 'Sign Up',
+        protected: false,
         component: Register
     },
     {
-        path: '/about',
-        title: 'About',
-        component: About
+        path: '/',
+        title: 'Home',
+        protected: true,
+        component: Home
+    },
+    {
+        path: '/verify',
+        title: 'Verify Account',
+        protected: false,
+        component: Verify
+    },
+    {
+        path: '/password-recovery',
+        title: 'Recover Password',
+        protected: false,
+        component: PasswordRecovery
+    },
+    {
+        path: '/reset-password',
+        title: 'Reset Password',
+        protected: false,
+        component: ResetPassword
     },
     {
         path: '/404',
         title: 'Not found',
+        protected: false,
         component: Error
-    }
+    },
 ]
 
-export const AuthPages = ["/signin", "/signup"];
-
-function InjectAnchors() {
+let observer = null;
+export function InjectAnchors(anchor) {
+    if (anchor) {
+        anchor.onclick = (event) => {
+            event.preventDefault();
+            history.pushState(null, '', anchor.getAttribute('href'));
+            Router();
+        }
+        return ;
+    }
     const anchors = document.querySelectorAll('a');
     anchors.forEach(anchor => {
         anchor.onclick = (event) => {
@@ -62,14 +90,35 @@ function InjectAnchors() {
     });
 }
 
+function destroyObserver() {
+    if (observer) {
+        observer.disconnect();
+        observer = null;
+    }
+}
+
+function initObserver() {
+    observer = new MutationObserver((mutations) => {
+        if (mutations.some(m => m.addedNodes.length > 0)) {
+            InjectAnchors();
+        }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+}
+
+
 async function Router() {
     const parentComp = document.body;
     const route = routes.find(r => r.path === window.location.pathname) ?? routes[routes.length - 1];
 
     parentComp.innerHTML = '';
+
+    destroyObserver();
+    initObserver();
+    if (await useUser(route)) parentComp.appendChild(Sidebar());
+
     parentComp.appendChild(await route.component());
-    InjectAnchors();
     document.title = "Camagru | " + route.title;
-}
+}   
 
 export default Router
