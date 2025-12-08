@@ -43,15 +43,17 @@ abstract class AbstractModel {
      * @param int $offset offset of rows to return
      * @return array
      */
-    public function findAll(mixed $limit = null, int $offset = 0): array {
-        $query = "SELECT * FROM $this->table";
+    public function findAll(array $criteria, mixed $limit = null, int $offset = 0): array {
+        $bindings = [];
+        $whereClause = $this->buildWhereClause($criteria, $bindings);
+        $query = "SELECT * FROM $this->table WHERE $whereClause";
         if ($limit !== null) {
             $query .= " LIMIT $limit OFFSET $offset";
         } else if ($offset > 0) {
             $query .= " OFFSET $offset";
         }
         $stmt = $this->instance->prepare($query);
-        $stmt->execute();
+        $stmt->execute($bindings);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
