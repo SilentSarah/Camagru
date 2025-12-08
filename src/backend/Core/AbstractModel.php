@@ -86,7 +86,7 @@ abstract class AbstractModel {
 
         $stmt = $this->instance->prepare($query);
         $stmt->execute($bindings);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     /**
