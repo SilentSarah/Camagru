@@ -261,4 +261,16 @@ abstract class AbstractModel {
 
         return $stmt->execute(array_values($data));
     }
+
+    /**
+     * Executes a query on the database
+     * @param string $sql the query to execute
+     * @param array $params the parameters to bind to the query
+     * @return array
+     */
+    public function query(string $sql, array $params = []): array {
+        $stmt = $this->instance->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
