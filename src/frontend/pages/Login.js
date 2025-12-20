@@ -81,9 +81,10 @@ export default async function Login() {
             showToast("Login successful", "success");
             goTo("/", 1);
         } else {
-            showToast(result.error, "error");
             if (result.code === "USER_NOT_VERIFIED") {
                 goTo("/verify", 1);
+            } else {
+                showToast(result.error, "error");
             }
         }
     };
