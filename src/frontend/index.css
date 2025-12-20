@@ -1,1 +1,5 @@
 @import "tailwindcss";
+
+@utility bg-insta {
+    background-color: #22262a;
+}
