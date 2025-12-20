@@ -21,8 +21,9 @@ import Error from '../pages/Error.js';
 import Verify from '../pages/Verify.js';
 import PasswordRecovery from '../pages/PasswordRecovery.js';
 import ResetPassword from '../pages/ResetPassword.js';
+import Profile from '../pages/Profile.js';
 import { useUser, user } from './Auth.js';
-import { goTo } from './Utils.js';
+import { goTo, injectTooltips } from './Utils.js';
 import Sidebar from '../components/Sidebar.js';
 
 export const routes = [
@@ -61,6 +62,12 @@ export const routes = [
         title: 'Reset Password',
         protected: false,
         component: ResetPassword
+    },
+    {
+        path: '/profile',
+        title: 'Profile',
+        protected: true,
+        component: Profile
     },
     {
         path: '/404',

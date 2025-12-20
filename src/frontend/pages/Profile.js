@@ -1,3 +1,18 @@
+/*
+ *   ██████  ▄▄▄       ██▀███   ▄▄▄       ██░ ██ 
+ * ▒██    ▒ ▒████▄    ▓██ ▒ ██▒▒████▄    ▓██░ ██▒
+ * ░ ▓██▄   ▒██  ▀█▄  ▓██ ░▄█ ▒▒██  ▀█▄  ▒██▀▀██░
+ *   ▒   ██▒░██▄▄▄▄██ ▒██▀▀█▄  ░██▄▄▄▄██ ░▓█ ░██ 
+ * ▒██████▒▒ ▓█   ▓██▒░██▓ ▒██▒ ▓█   ▓██▒░▓█▒░██▓
+ * ▒ ▒▓▒ ▒ ░ ▒▒   ▓▒█░░ ▒▓ ░▒▓░ ▒▒   ▓▒█░ ▒ ░░▒░▒
+ * ░ ░▒  ░ ░  ▒   ▒▒ ░  ░▒ ░ ▒░  ▒   ▒▒ ░ ▒ ░▒░ ░
+ *  ░  ░  ░    ░   ▒     ░░   ░   ░   ▒    ░  ░░ ░
+ * ░        ░  ░   ░           ░  ░ ░  ░  ░
+ *                                       
+ * File Created: Monday, 8th December 2025 5:37:17 pm
+ * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
+ */
+
 import { user } from "../js/Auth.js";
 import ProfileHeader from "../components/ProfileHeader.js";
 import ProfileContent from "../components/ProfileContent.js";
