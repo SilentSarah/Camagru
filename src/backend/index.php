@@ -16,6 +16,7 @@
 
 require_once "Core/init.php";
 require_once "Controllers/AuthController.php";
+require_once "Controllers/MediaController.php";
 require_once "Core/Middleware.php";
 
 $routes = [
@@ -27,6 +28,9 @@ $routes = [
     "/password-recovery" => [AuthController::class, "request_password_recovery", ["POST"], false],
     "/reset-password" => [AuthController::class, "reset_password", ["POST", "GET"], false],
     "/user" => [AuthController::class, "user", ["GET"], true],
+    "/photos" => [MediaController::class, "get_photos", ["GET"], true],
+    "/compose-photo" => [MediaController::class, "compose_photo", ["POST"], true],
+    "/upload-photo" => [MediaController::class, "upload_photo", ["POST"], true],
 ];
 
 $method = $_SERVER['REQUEST_METHOD'];
