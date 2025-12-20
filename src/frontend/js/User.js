@@ -18,13 +18,13 @@
  * Simple User class based on the user object returned by the server
  */
 export default class User {
-    constructor() {
-        this.id = null;
-        this.username = null;
-        this.email = null;
-        this.fullname = null;
-        this.is_verified = false;
-        this.profile_picture_url = null;
-        this.created_at = null;
+    constructor(userdata) {
+        this.id = userdata.id;
+        this.username = userdata.username;
+        this.email = userdata.email;
+        this.fullname = userdata.fullname;
+        this.is_verified = userdata.is_verified;
+        this.profile_picture_url = userdata.profile_picture_url ?? null;
+        this.created_at = userdata.created_at;
     }
 }
