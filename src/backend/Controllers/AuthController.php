@@ -257,7 +257,8 @@ class AuthController
                 "username" => $user->getUsername(),
                 "email" => $user->getEmail(),
                 "is_verified" => $user->isVerified(),
-                "profile_pic_url" => $user->getProfilePicUrl(),
+                "profile_pic_url" => $user->getProfilePicUrl() ?? null,
+                "created_at" => $user->getCreatedAt()
             ];
             $response = new HttpResponse(200, "Success", ["user" => $data]);
             $response->sendJson();
