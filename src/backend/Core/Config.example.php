@@ -44,7 +44,12 @@ class Config
     public const UPLOAD_DIR = __DIR__ . '/../static/uploads/';
     public const TEMP_DIR = __DIR__ . '/../static/temp/';
 
-
+    public const SUPPORTED_IMAGE_MIME_TYPES = [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/webp'
+    ];
 
     /**
      * keys that will be checked against the rules

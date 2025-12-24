@@ -15,8 +15,7 @@
 
 import { user } from "../js/Auth.js";
 import Photo from "../js/Photo.js";
-import { openPostModal } from "./Modal/PostViewModal.js";
-import { openPhotoCreationModal as openPhotoModal } from './Modal/PhotoCreationModal.js';
+import { openPhotoCreationModal as openPhotoModal } from './Modal/photo-creation/PhotoCreationModal.js';
 
 
 /**

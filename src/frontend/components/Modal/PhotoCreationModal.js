@@ -42,6 +42,8 @@ export default function PhotoCreationModal({ onClose, onPost }) {
     let compositor = null;
     let mediaStream = null;
     let stickers = []; // Array of active DOM sticker objects
+    let currentFile = null; // Track the original file for GIF processing
+    let isGif = false; // Track if current image is a GIF
     
     // Track last edit state for back navigation
     let lastEditState = {
@@ -198,7 +200,7 @@ export default function PhotoCreationModal({ onClose, onPost }) {
                     </svg>
 
                 </div>
-                <h3 class="text-xl font-light">Drag photos and videos here</h3>
+                <h3 class="text-xl font-light">Drag photos and GIFs here</h3>
                 
                 <div class="flex gap-3 mt-4">
                      <button id="btn-upload" class="bg-[#0095f6] hover:bg-[#1877f2] font-semibold px-4 py-1.5 rounded-md text-sm text-white transition-colors">
@@ -234,19 +236,25 @@ export default function PhotoCreationModal({ onClose, onPost }) {
         main.querySelector('#btn-recents').onclick = renderRecentsView;
         main.querySelector('#file-input').onchange = (e) => {
             const file = e.target.files[0];
-            if (file) handleFileSelect(file);
+            if (file) validateAndSelectFile(file);
         };
         
         main.ondragover = (e) => {
             e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
             main.classList.add('bg-gray-800');
         };
-        main.ondragleave = () => main.classList.remove('bg-gray-800');
+        main.ondragleave = (e) => {
+            e.preventDefault();
+            main.classList.remove('bg-gray-800');
+        };
         main.ondrop = (e) => {
             e.preventDefault();
             main.classList.remove('bg-gray-800');
             const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith('image/')) handleFileSelect(file);
+            if (file) {
+                validateAndSelectFile(file);
+            }
         };
 
         // Click handler for recent items (if any in the initial view)
@@ -398,7 +406,7 @@ export default function PhotoCreationModal({ onClose, onPost }) {
                 <!-- Canvas Area -->
                 <div class="flex-1 bg-[#1c1e21] flex items-center justify-center overflow-hidden" id="canvas-wrapper">
                     <div class="relative inline-block max-w-full max-h-full" id="canvas-container">
-                        <canvas id="editor-canvas" class="block max-w-full max-h-full border"></canvas>
+                        <canvas id="editor-canvas" class="block max-w-full max-h-full"></canvas>
                         <div id="sticker-layer" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
                     </div>
                 </div>
@@ -653,8 +661,12 @@ export default function PhotoCreationModal({ onClose, onPost }) {
                  stickers: stickers.map(s => ({...s, element: undefined}))
              };
              
-             await compositor.bakeStickers(stickers);
-             const finalImage = compositor.export();
+             // Process image via backend (handles both static images and GIFs)
+             const finalImage = await processImageWithStickers(
+                 currentFile,
+                 stickers.map(s => ({...s, element: undefined})),
+                 compositor.filter
+             );
              
              // Only save to drafts if this is a new image or has been modified
              // Skip if it came from recents and hasn't been modified
@@ -773,10 +785,87 @@ export default function PhotoCreationModal({ onClose, onPost }) {
         }
     };
 
+    /**
+     * Validate file type and show error if invalid
+     */
+    const validateAndSelectFile = (file) => {
+        // Check if file is an image
+        if (!file.type.startsWith('image/')) {
+            showToast('Please select an image file', 'error');
+            return;
+        }
+        
+        // Reject SVG files
+        if (file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')) {
+            showToast('SVG files are not supported. Please use PNG, JPG, or GIF', 'error');
+            return;
+        }
+        
+        handleFileSelect(file);
+    };
+
     const handleFileSelect = (file) => {
+        currentFile = file;
+        isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+        
         const reader = new FileReader();
         reader.onload = (e) => renderEditorView(e.target.result);
         reader.readAsDataURL(file);
+    };
+
+    /**
+     * Process image with stickers/filters via backend PHP GD
+     * Backend handles both static images (PNG, JPG) and animated GIFs
+     * @param {File} imageFile - The original image file
+     * @param {Array} stickerData - Array of sticker objects with positions/scales
+     * @param {string} filterCss - CSS filter string to apply
+     * @returns {Promise<string>} - URL of processed image
+     */
+    const processImageWithStickers = async (imageFile, stickerData, filterCss) => {
+        const formData = new FormData();
+        
+        // Add the image file (backend will detect if it's a GIF or static image)
+        formData.append('image', imageFile);
+        
+        // Add filter data
+        formData.append('filter', filterCss);
+        
+        // Prepare sticker data for backend
+        // Each sticker needs: type, emoji/imageUrl, x, y, scale
+        const stickersForBackend = stickerData.map(s => ({
+            type: s.type || 'emoji',
+            emoji: s.emoji || null,
+            imageUrl: s.imageUrl || null,
+            x: s.x,           // Relative position (0-1)
+            y: s.y,           // Relative position (0-1)
+            scale: s.scale || 1
+        }));
+        formData.append('stickers', JSON.stringify(stickersForBackend));
+        
+        // Add canvas dimensions for scale reference
+        formData.append('canvasWidth', compositor.canvas.width.toString());
+        formData.append('canvasHeight', compositor.canvas.height.toString());
+        
+        try {
+            const response = await fetch('http://localhost:8000/process-image', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error('Image processing failed');
+            }
+            
+            const blob = await response.blob();
+            return URL.createObjectURL(blob);
+        } catch (error) {
+            console.error('Image processing error:', error);
+            showToast('Failed to process image', 'error');
+            
+            // Fallback to canvas baking for static images
+            await compositor.bakeStickers(stickerData);
+            return compositor.export();
+        }
     };
 
     const stopCamera = () => {

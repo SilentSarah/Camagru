@@ -49,7 +49,6 @@ export const DraftStorage = {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedDrafts));
             return newDraft;
         } catch (e) {
-            console.error('Failed to save draft', e);
             // Handle quota exceeded
             if (e.name === 'QuotaExceededError') {
                 // Try to remove oldest drafts
