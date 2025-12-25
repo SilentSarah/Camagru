@@ -61,6 +61,10 @@ class ImageHelpers
 
     public static function export_image(Imagick $image, string $mimeType)
     {
+        if (!is_dir(Config::TEMP_DIR)) {
+            mkdir(Config::TEMP_DIR, 0777, true);
+        }
+
         $image->setImageFormat(str_replace('image/', '', $mimeType));
         $blob = ($image->getNumberImages() > 1) ? $image->getImagesBlob() : $image->getImageBlob();
         $base64Data = base64_encode($blob);
