@@ -8,26 +8,28 @@ import { injectStyles, removeStyles } from './styles.js';
 import { DraftStorage } from '../../../utils/DraftStorage.js';
 import { showToast } from '../../Toast.js';
 import { createSelectionView } from './views/SelectionView.js';
-import { createCameraView } from './views/CameraView.js';
 import { createRecentsView } from './views/RecentsView.js';
-import { createEditorView } from './views/EditorView.js';
+import { createLiveEditorView } from './views/LiveEditorView.js';
 import { createShareView } from './views/ShareView.js';
-import { processImageWithStickers } from './logic/ImageProcessor.js';
+import { getCookie } from '../../../js/Utils.js'
+import FetchCSRF from '../../../js/Csrf.js';
+import { PhotoCompositor } from '../../../utils/PhotoCompositor.js';
+import { abortController } from '../../../js/Router.js';
 
 // In-memory recents array
 const recents = [];
 
 export default function PhotoCreationModal({ onClose, onPost }) {
     let mode = 'selection';
-    let currentFile = null;
     let editorState = {
         filter: 'none',
         stickers: [],
-        compositor: null
+        hasModification: false
     };
 
-    // Track last edit state for back navigation
+    // Track last state for back navigation
     let lastEditState = {
+        mode: 'camera',
         imageUrl: null,
         filter: 'none',
         stickers: []
@@ -52,9 +54,7 @@ export default function PhotoCreationModal({ onClose, onPost }) {
             &times;
         </button>
         <h2 id="modal-title" class="font-semibold text-base flex-1 text-center">Create new post</h2>
-        <button id="modal-next-btn" class="text-blue-500 font-semibold text-sm hover:text-white transition-colors hidden">
-            Next
-        </button>
+        <div id="header-right-placeholder" class="w-6"></div>
     `;
     contentContainer.appendChild(header);
 
@@ -67,7 +67,7 @@ export default function PhotoCreationModal({ onClose, onPost }) {
         isOpen: true,
         onClose: () => {
              // Cleanup
-             if (main.stopCamera) main.stopCamera(); // If camera view attached method
+             if (main.stopCamera) main.stopCamera();
              removeStyles();
              if (onClose) onClose();
         },
@@ -82,11 +82,14 @@ export default function PhotoCreationModal({ onClose, onPost }) {
     };
 
     // --- Header Logic ---
-    const updateHeader = (title, showBack, showNext, nextLabel = 'Next') => {
+    const updateHeader = (title, showBack) => {
         header.querySelector('#modal-title').textContent = title;
         const backBtn = header.querySelector('#modal-back-btn');
         const cancelBtn = header.querySelector('#modal-cancel-btn');
-        const nextBtn = header.querySelector('#modal-next-btn');
+        
+        // Clear right placeholder (removes Share button etc from previous views)
+        const rightPlaceholder = header.querySelector('#header-right-placeholder');
+        rightPlaceholder.innerHTML = ''; 
 
         if (showBack) {
             backBtn.classList.remove('hidden');
@@ -95,17 +98,10 @@ export default function PhotoCreationModal({ onClose, onPost }) {
             backBtn.classList.add('hidden');
             cancelBtn.classList.remove('hidden');
         }
-
-        if (showNext) {
-            nextBtn.classList.remove('hidden');
-            nextBtn.textContent = nextLabel;
-        } else {
-            nextBtn.classList.add('hidden');
-        }
     };
 
     header.querySelector('#modal-cancel-btn').onclick = () => {
-        if (mode === 'edit') {
+        if (mode === 'editor' || mode === 'share') {
             if (confirm('Discard changes?')) modal.close();
         } else {
             modal.close();
@@ -113,16 +109,21 @@ export default function PhotoCreationModal({ onClose, onPost }) {
     };
 
     header.querySelector('#modal-back-btn').onclick = () => {
-        if (mode === 'camera' || mode === 'edit' || mode === 'recents') {
+        if (mode === 'editor' || mode === 'recents') {
             renderSelection();
         } else if (mode === 'share') {
-            renderEditor(lastEditState.imageUrl, lastEditState.filter, lastEditState.stickers);
+            renderLiveEditor(lastEditState.mode, lastEditState.imageUrl, lastEditState.filter, lastEditState.stickers);
         }
     };
 
     // --- Views renderers ---
 
     const setMainContent = (view) => {
+        // Cleanup previous camera if exists
+        if (main.stopCamera) {
+            main.stopCamera();
+            main.stopCamera = null;
+        }
         main.innerHTML = '';
         main.appendChild(view);
     };
@@ -134,62 +135,56 @@ export default function PhotoCreationModal({ onClose, onPost }) {
 
     const renderSelection = () => {
         mode = 'selection';
-        updateHeader('Create new post', false, false);
+        updateHeader('Create new post', false);
         setDimensions('min(90vw, 500px)', 'min(80vh, 550px)');
 
         const view = createSelectionView({
             recents,
             onUpload: (file) => {
-                currentFile = file;
                 const reader = new FileReader();
-                reader.onload = (e) => renderEditor(e.target.result);
+                reader.onload = async (e) => {
+                    let url = e.target.result;
+                    // Only resize if NOT a GIF to preserve animation
+                    if (file.type !== 'image/gif') {
+                        url = await PhotoCompositor.resizeImage(url);
+                    }
+                    renderLiveEditor('image', url);
+                };
                 reader.readAsDataURL(file);
             },
-            onCamera: () => renderCamera(),
+            onCamera: () => renderLiveEditor('camera'),
             onRecents: () => renderRecents(),
         });
 
-        // Special handler for "clicking a recent item" from the selection screen
-        view.setOnSelectRecent((recent) => {
-             renderEditor(recent.imageUrl, recent.filter, recent.stickers);
-        });
-
-        setMainContent(view);
-    };
-
-    const renderCamera = () => {
-        mode = 'camera';
-        updateHeader('Photo', true, false);
-        
-        const view = createCameraView({
-            onCapture: (dataUrl) => {
-                // Convert dataUrl to File if possible? Or just use null currentFile
-                // ImageProcessor handles null file by falling back to canvas bake, 
-                // BUT for GIFs we need the file. Camera is always static PNG so it's fine.
-                currentFile = null; 
-                renderEditor(dataUrl);
+        // Handler for clicking a recent item from selection screen
+        view.setOnSelectRecent(async (recent) => {
+            let url = recent.imageUrl;
+            if (!url.startsWith('data:image/gif')) {
+                url = await PhotoCompositor.resizeImage(url);
             }
+            renderLiveEditor('image', url, recent.filter, recent.stickers);
         });
-        
-        // Expose stopCamera locally for cleanup if modal closes mid-camera
-        main.stopCamera = view.stopCamera;
-        
+
         setMainContent(view);
     };
 
     const renderRecents = () => {
         mode = 'recents';
-        updateHeader('Recent Edits', true, false);
+        updateHeader('Recent Edits', true);
         
         const view = createRecentsView({
             recents,
-            onSelect: (recent) => {
-                 renderEditor(recent.imageUrl, recent.filter, recent.stickers || [], recent.id);
+            onSelect: async (recent) => {
+                let url = recent.imageUrl;
+                if (!url.startsWith('data:image/gif')) {
+                    url = await PhotoCompositor.resizeImage(url);
+                }
+                renderLiveEditor('image', url, recent.filter || 'none', recent.stickers || [], recent.id);
             },
             onClearAll: () => {
                 recents.length = 0;
                 DraftStorage.clearDrafts();
-                renderRecents(); // Re-render
+                renderRecents();
             },
             onDelete: (index, id) => {
                 if (index < recents.length) {
@@ -197,118 +192,110 @@ export default function PhotoCreationModal({ onClose, onPost }) {
                 } else if (id) {
                     DraftStorage.deleteDraft(parseInt(id));
                 }
-                renderRecents(); // Re-render
+                renderRecents();
             }
         });
 
         setMainContent(view);
     };
 
-    const renderEditor = (imageUrl, initialFilter = 'none', initialStickers = [], fromDraftId = null) => {
-        mode = 'edit';
-        updateHeader('Crops', true, true, 'Next');
-        setDimensions('min(95vw, 1100px)', 'min(90vh, 800px)');
+    const renderLiveEditor = (editorMode = 'camera', imageUrl = null, initialFilter = 'none', initialStickers = [], fromDraftId = null) => {
+        mode = 'editor';
+        updateHeader(editorMode === 'camera' ? 'Take Photo' : 'Edit Photo', true);
+        setDimensions('min(95vw, 900px)', 'min(90vh, 700px)');
 
-        let hasBeenModified = false;
-
-        const view = createEditorView({
+        const view = createLiveEditorView({
+            mode: editorMode,
             imageUrl,
             initialFilter,
             initialStickers,
+            onCapture: async (dataUrl, state) => {
+                // Save state for back navigation
+                lastEditState = {
+                    mode: editorMode,
+                    imageUrl: editorMode === 'image' ? imageUrl : dataUrl,
+                    filter: state.filter,
+                    stickers: state.stickers
+                };
+                
+                editorState = state;
+
+                // Save as draft
+                DraftStorage.saveDraft({
+                    thumbnail: dataUrl,
+                    imageUrl: editorMode === 'image' ? imageUrl : dataUrl,
+                    filter: state.filter,
+                    stickers: state.stickers.map(s => ({...s, element: undefined}))
+                });
+
+                // If editing from a draft, delete the old one
+                if (fromDraftId) {
+                    DraftStorage.deleteDraft(fromDraftId);
+                }
+
+                renderShare(dataUrl);
+            },
             onStateChange: (state) => {
                 editorState = state;
-                hasBeenModified = true;
+            },
+            onError: (e) => {
+                showToast('Camera access failed', 'error');
+                renderSelection();
             }
         });
         
-        // Reset modified flag after initial load (onStateChange triggers once on load)
-        // We can just rely on user interaction triggers if we want precision, or assume load is not modification.
-        // Actually, let's track state changes. Listener bubbles up.
+        // Expose stopCamera for cleanup
+        main.stopCamera = view.stopCamera;
         
-        header.querySelector('#modal-next-btn').onclick = async () => {
-             const btn = header.querySelector('#modal-next-btn');
-             const originalText = btn.innerHTML;
-             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-             // No disable, maybe?
-
-             // Save for back nav
-             lastEditState = {
-                 imageUrl, 
-                 filter: editorState.filter,
-                 stickers: editorState.stickers.map(s => ({...s, element: undefined})) // clean DOM
-             };
-
-             const finalImage = await processImageWithStickers(
-                 imageUrl,
-                 editorState.stickers,
-                 editorState.filter,
-                 editorState.compositor
-             );
-             
-             // Save Draft Logic
-             if (!fromDraftId || hasBeenModified) {
-                 if (fromDraftId && hasBeenModified) {
-                     DraftStorage.deleteDraft(fromDraftId);
-                 }
-                 DraftStorage.saveDraft({
-                    thumbnail: finalImage,
-                    imageUrl: imageUrl, 
-                    filter: editorState.filter,
-                    stickers: editorState.stickers.map(s => ({...s, element: undefined}))
-                 });
-             }
-
-             renderShare(finalImage);
-        };
-
         setMainContent(view);
     };
 
     const renderShare = (finalImageUrl) => {
         mode = 'share';
-        updateHeader('Create new post', true, true, 'Share');
-        setDimensions('min(95vw, 1100px)', 'min(90vh, 800px)');
+        updateHeader('Create new post', true);
+        setDimensions('min(95vw, 900px)', 'min(90vh, 700px)');
 
         const view = createShareView({ imageDataUrl: finalImageUrl });
 
-        header.querySelector('#modal-next-btn').onclick = async () => {
+        // Add Share button to header
+        const rightPlaceholder = header.querySelector('#header-right-placeholder');
+        rightPlaceholder.innerHTML = `
+            <button id="share-btn" class="text-blue-500 font-semibold text-sm hover:text-white transition-colors">Share</button>
+        `;
+
+        header.querySelector('#share-btn').onclick = async () => {
             const caption = view.getCaption();
-            const btn = header.querySelector('#modal-next-btn');
+            const btn = header.querySelector('#share-btn');
             
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             btn.disabled = true;
 
             try {
-                 const blob = await fetch(finalImageUrl).then(r => r.blob());
+                const blob = await fetch(finalImageUrl).then(r => r.blob());
                 const formData = new FormData();
-                formData.append('image', blob, 'post.png');
+                const extension = finalImageUrl.split(";").shift().split("/").pop();
+                formData.append('image', blob, `post-${Date.now()}.${extension}`);
                 formData.append('description', caption);
 
-                // Simulate delay or real upload
-                // Wait for onPost or do we perform fetch here? Original code did fetch here?
-                // Wait, original did "await new Promise..." AND onPost.
-                // It didn't actually upload to server in the 'try' block except specifically creating FormData?
-                // Ah, looking at original code... lines 729-732 just CREATED formData. It didn't send it anywhere except maybe `onPost`?
-                // Wait, line 737: `if (onPost) onPost({ imageUrl: imageDataUrl, description: caption });`
-                // It seems the original code was incomplete or I missed the `fetch` call?
-                // looking at line 730: `const blob = await fetch(imageDataUrl)...` - this fetches the blob from the objectURL.
-                // The original code DID NOT actually POST to backend in the snippet I saw! It just created FormData.
-                // EDIT: I checked line 850 in original, that was process-image.
-                // RenderShareView lines 722+: 
-                // It creates formData... then `await new Promise(r => setTimeout(r, 1000));`
-                // Then `onPost(...)`.
+                const jwtToken = getCookie('session_token');
+                const csrfToken = await FetchCSRF();
+
+                const response = await fetch(`${window.env.APP_URL}upload-post`, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include',
+                    headers: {
+                        'Authorization': `Bearer ${jwtToken}`,
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    signal: abortController.signal
+                });
+
+                if (!response.ok) throw new Error('Upload failed');
+                if (onPost) onPost({ imageUrl: finalImageUrl, description: caption }); 
                 
-                // So I will replicate that behavior. The actual upload might be handled by `onPost` or it was just a mock.
-                // I'll assume `onPost` handles the real action or the user hasn't implemented the upload endpoint in the modal yet.
-                // I will replicate the "mock" behavior.
-                
-                await new Promise(r => setTimeout(r, 1000));
-                
-                if (onPost) onPost({ imageUrl: finalImageUrl, description: caption, formData }); 
-                // Added formData to valid callback just in case.
-                
+                showToast('Post shared!', 'success');
                 modal.close();
-                showToast('Post shared', 'success');
             } catch (e) {
                  showToast('Upload failed', 'error');
                  btn.textContent = 'Share';
@@ -330,3 +317,4 @@ export function openPhotoCreationModal(options) {
     document.body.appendChild(modal);
     return modal;
 }
+

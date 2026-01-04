@@ -30,7 +30,55 @@ export class PhotoCompositor {
      * @param {string} src - Image source
      * @returns {Promise<void>}
      */
+    /**
+     * Resize an image data URL if it exceeds max dimensions
+     * @param {string} dataUrl 
+     * @param {number} maxDim 
+     * @returns {Promise<string>} Resized data URL
+     */
+    static async resizeImage(dataUrl, maxDim = 1280) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                let width = img.width;
+                let height = img.height;
+
+                if (width <= maxDim && height <= maxDim) {
+                    resolve(dataUrl);
+                    return;
+                }
+
+                if (width > height) {
+                    height = (height / width) * maxDim;
+                    width = maxDim;
+                } else {
+                    width = (width / height) * maxDim;
+                    height = maxDim;
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/png'));
+            };
+            img.onerror = reject;
+            img.src = dataUrl;
+        });
+    }
+
+    /**
+     * Load an image from URL or data URI
+     * @param {string} src - Image source
+     * @returns {Promise<void>}
+     */
     async loadImage(src) {
+        // Ensure we work with a resized image to prevent backend issues
+        // We do this check here too in case loadImage is called directly
+        // But ideally the caller should resize first for UI performance
+        const resizedSrc = await PhotoCompositor.resizeImage(src);
+        
         return new Promise((resolve, reject) => {
             const img = new Image();
             img.crossOrigin = 'anonymous';
@@ -42,7 +90,7 @@ export class PhotoCompositor {
                 resolve();
             };
             img.onerror = reject;
-            img.src = src;
+            img.src = resizedSrc;
         });
     }
 

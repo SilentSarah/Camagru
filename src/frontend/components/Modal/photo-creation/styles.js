@@ -13,7 +13,7 @@ export const injectStyles = () => {
         .sticker-overlay {
             position: absolute;
             user-select: none;
-            touch-action: none;
+            // touch-action: none;
             cursor: grab;
             display: flex;
             align-items: center;
@@ -66,7 +66,7 @@ export const injectStyles = () => {
             z-index: 10;
         }
         #sticker-layer {
-            touch-action: none;
+            // touch-action: none;
             overflow: hidden; 
         }
     `;

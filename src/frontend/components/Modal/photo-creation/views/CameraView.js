@@ -26,7 +26,6 @@ export function createCameraView({ onCapture, onError }) {
             mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
             video.srcObject = mediaStream;
         } catch (e) {
-            console.error(e);
             if (onError) onError(e);
             else showToast('Camera access failed', 'error');
         }

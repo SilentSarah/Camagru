@@ -4,6 +4,7 @@
  */
 
 import FetchCSRF from '../../../../js/Csrf.js';
+import { abortController } from '../../../../js/Router.js';
 import { getCookie } from '../../../../js/Utils.js';
 import { PhotoCompositor } from '../../../../utils/PhotoCompositor.js';
 import { showToast } from '../../../Toast.js';
@@ -45,14 +46,15 @@ export const processImageWithStickers = async (imageDataUrl, stickerData, filter
     formData.append('canvasHeight', compositor.canvas.height.toString());
     
     try {
-        const response = await fetch('http://localhost:8000/index.php/process-image', {
+        const response = await fetch(`${window.env.APP_URL}index.php/process-image`, {
             method: 'POST',
             credentials: 'include',
             headers: {
                 "X-CSRF-TOKEN": await FetchCSRF(),
                 "Authorization": `Bearer ${getCookie('session_token')}`
             },
-            body: formData
+            body: formData,
+            signal: abortController.signal
         });
         
         if (!response.ok) {
@@ -62,11 +64,11 @@ export const processImageWithStickers = async (imageDataUrl, stickerData, filter
         const retJson = await response.json();
         return retJson.image;
     } catch (error) {
-        console.error('Image processing error:', error);
         showToast('Failed to process image', 'error');
+        return null;
         
-        // Fallback to canvas baking for static images
-        await compositor.bakeStickers(stickerData);
-        return compositor.export();
+        // // Fallback to canvas baking for static images
+        // await compositor.bakeStickers(stickerData);
+        // return compositor.export();
     }
 };

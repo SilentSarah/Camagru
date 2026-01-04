@@ -25,7 +25,6 @@ export const DraftStorage = {
             const drafts = localStorage.getItem(STORAGE_KEY);
             return drafts ? JSON.parse(drafts) : [];
         } catch (e) {
-            console.error('Failed to load drafts', e);
             return [];
         }
     },
