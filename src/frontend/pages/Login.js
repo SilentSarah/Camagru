@@ -15,12 +15,13 @@
 
 import { showToast } from '../components/Toast.js';
 import FetchCSRF from '../js/Csrf.js';
+import { abortController } from '../js/Router.js';
 import { goTo } from '../js/Utils.js';
 
 export default async function Login() {
 
     const div = document.createElement('div');
-    div.className = 'container mx-auto flex justify-center items-center h-screen text-white';
+    div.className = 'container mx-auto flex justify-center items-center min-h-screen text-white px-4';
     div.innerHTML = /*html*/`
         <div class="flex items-center justify-center w-full gap-3">
             <!-- Left side - Image -->
@@ -30,7 +31,7 @@ export default async function Login() {
             </div>
 
             <!-- Right side - Login Form -->
-            <div class="flex flex-col items-center justify-center py-5" style="width: 30%;">
+            <div class="flex flex-col items-center justify-center py-5 w-full max-w-sm lg:w-[30%]">
                 <img src="/public/Camagru.svg" class="object-cover mb-4" style="max-width: 200px; width: 75%;"
                     alt="Camagru Logo" />
                 <form 
@@ -68,13 +69,14 @@ export default async function Login() {
     form.onsubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(form);
-        const response = await fetch('http://localhost:8000/index.php/login', {
+        const response = await fetch(`${window.env.APP_URL}index.php/login`, {
             method: 'POST',
             credentials: 'include',
             headers: {
                 'X-CSRF-TOKEN': await FetchCSRF()
             },
-            body: formData
+            body: formData,
+            signal: abortController.signal
         });
         const result = await response.json();
         if (response.status === 200) {

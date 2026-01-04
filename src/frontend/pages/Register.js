@@ -15,11 +15,12 @@
 
 import FetchCSRF from '../js/Csrf.js';
 import { showToast } from '../components/Toast.js';
+import { abortController } from '../js/Router.js';
 
 export default async function Register() {
     let csrfToken = await FetchCSRF();
     let renderedResult = document.createElement('div');
-    renderedResult.className = 'container mx-auto flex justify-center items-center min-h-screen text-white py-5';
+    renderedResult.className = 'container mx-auto flex justify-center items-center min-h-screen text-white py-5 px-4';
 
     const registerPage = document.createElement('div');
     registerPage.className = 'flex flex-col items-center justify-center w-full';
@@ -27,7 +28,7 @@ export default async function Register() {
         <div class="flex flex-col items-center justify-center w-full" style="max-width: 350px;">
 
             <!-- Main Register Box -->
-            <div class="p-4 w-full mb-3 flex flex-col items-center bg-black border border-gray-700">
+            <div class="p-4 w-full mb-3 flex flex-col items-center bg-black">
                 <img src="/public/Camagru.svg" class="object-cover mb-3" style="width: 12rem;" alt="Camagru Logo" />
 
                 <p class="text-center text-gray-400 font-bold mb-3">Sign up to see photos and videos from your friends.</p>
@@ -54,24 +55,13 @@ export default async function Register() {
                             name="password" placeholder="Password" required>
                     </div>
 
-                    <p class="text-sm text-center text-gray-400 mb-3" style="font-size: 0.75rem;">
-                        People who use our service may have uploaded your contact information to Camagru. <a href="#"
-                            class="no-underline text-gray-200 hover:text-white">Learn More</a>
-                    </p>
-                    <p class="text-sm text-center text-gray-400 mb-3" style="font-size: 0.75rem;">
-                        By signing up, you agree to our <a href="#"
-                            class="no-underline text-gray-200 hover:text-white">Terms</a>, <a href="#"
-                            class="no-underline text-gray-200 hover:text-white">Privacy Policy</a> and <a href="#"
-                            class="no-underline text-gray-200 hover:text-white">Cookies Policy</a>.
-                    </p>
-
                     <button type="submit"
                         class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full">Sign up</button>
                 </form>
             </div>
 
             <!-- Login Link Box -->
-            <div class="p-3 w-full flex justify-center items-center bg-black border border-gray-700">
+            <div class="p-3 w-full flex justify-center items-center bg-black">
                 <p class="m-0 text-sm">Have an account? <a href="/signin"
                         class="no-underline text-blue-500 hover:text-blue-400 font-bold">Log
                         in</a></p>
@@ -110,13 +100,14 @@ export default async function Register() {
         const formData = new FormData(form);
         renderedResult.replaceChild(loadingPage, registerPage);
         try {
-            const response = await fetch('http://localhost:8000/index.php/register', {
+            const response = await fetch(`${window.env.APP_URL}index.php/register`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
                     'X-CSRF-TOKEN': csrfToken
                 },
-                body: formData
+                body: formData,
+                signal: abortController.signal
             });
             if (response.status === 201) {
                 showToast("Account registered successfully", "success");
@@ -127,7 +118,6 @@ export default async function Register() {
                 renderedResult.replaceChild(registerPage, loadingPage);
             }
         } catch (error) {
-            console.log(error);
             showToast("An error occurred, Please try again later", "error");
             renderedResult.replaceChild(registerPage, loadingPage);
         } finally {

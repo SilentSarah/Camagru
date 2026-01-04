@@ -15,11 +15,12 @@
 
 import { showToast } from '../components/Toast.js';
 import FetchCSRF from '../js/Csrf.js';
+import { abortController } from '../js/Router.js';
 import { getCookie } from '../js/Utils.js';
 
 export default async function Verify() {
     const div = document.createElement('div');
-    div.className = 'container mx-auto flex justify-center items-center h-screen text-white';
+    div.className = 'container mx-auto flex justify-center items-center min-h-screen text-white px-4';
 
     div.innerHTML = /*html*/`
         <div class="flex flex-col items-center justify-center gap-4">
@@ -41,13 +42,14 @@ export default async function Verify() {
             return;
         }
         const csrfToken = await FetchCSRF();
-        const response = await fetch(`http://localhost:8000/index.php/verify-account?token=${token}`, {
+        const response = await fetch(`${window.env.APP_URL}index.php/verify-account?token=${token}`, {
             method: 'POST',
             credentials: 'include',
             headers: {
                 'Authorization': `Bearer ${sessionToken}`,
                 'X-CSRF-TOKEN': csrfToken
-            }
+            },
+            signal: abortController.signal
         });
 
         const result = await response.json();
@@ -106,13 +108,14 @@ export default async function Verify() {
                     const formData = new FormData();
                     formData.append('email', email);
 
-                    const response = await fetch('http://localhost:8000/index.php/request-verification', {
+                    const response = await fetch(`${window.env.APP_URL}index.php/request-verification`, {
                         method: 'POST',
                         credentials: 'include',
                         headers: {
                             'X-CSRF-TOKEN': await FetchCSRF()
                         },
-                        body: formData
+                        body: formData,
+                       // signal: abortController.signal
                     });
 
                     if (response.ok) {
@@ -124,7 +127,6 @@ export default async function Verify() {
                         showToast(res.error || "Unknown error", "error");
                     }
                 } catch (e) {
-                    console.log(e)
                     showToast(e.error || "Unknown error", "error");
                 } finally {
                     requestBtn.disabled = false;

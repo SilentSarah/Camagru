@@ -16,6 +16,7 @@
 import FetchCSRF from '../js/Csrf.js';
 import { showToast } from '../components/Toast.js';
 import { goTo } from '../js/Utils.js';
+import { abortController } from '../js/Router.js';
 
 export default async function ResetPassword() {
     const div = document.createElement('div');
@@ -38,9 +39,10 @@ export default async function ResetPassword() {
     `;
 
     try {
-        const response = await fetch(`http://localhost:8000/index.php/reset-password?token=${token}`, {
+        const response = await fetch(`${window.env.APP_URL}index.php/reset-password?token=${token}`, {
             method: 'GET',
-            credentials: 'include'
+            credentials: 'include',
+            signal: abortController.signal
         });
 
         if (!response.ok) {
@@ -51,7 +53,6 @@ export default async function ResetPassword() {
         renderForm(div, token);
 
     } catch (error) {
-        console.error('Token verification error:', error);
         showToast(error.message || 'Invalid or expired token.', 'error');
         setTimeout(() => goTo('/signin', 1), 3000);
     }
@@ -126,13 +127,14 @@ function renderForm(container, token) {
 
         try {
             const csrfToken = await FetchCSRF();
-            const response = await fetch(`http://localhost:8000/index.php/reset-password?token=${token}`, {
+            const response = await fetch(`${window.env.APP_URL}index.php/reset-password?token=${token}`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
                     'X-CSRF-TOKEN': csrfToken
                 },
-                body: formData
+                body: formData,
+                signal: abortController.signal
             });
 
             const data = await response.json();
@@ -144,7 +146,6 @@ function renderForm(container, token) {
                 showToast(data.error || 'An error occurred. Please try again.', 'error');
             }
         } catch (error) {
-            console.error('Error:', error);
             showToast('Network error. Please try again later.', 'error');
         } finally {
             submitBtn.disabled = false;
