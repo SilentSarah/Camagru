@@ -14,20 +14,128 @@
  */
 
 import Post, { PostSkeleton } from '../components/Post.js';
+import { getCookie } from '../js/Utils.js';
+import { showToast } from '../components/Toast.js';
+import { abortController } from '../js/Router.js';
 
-export default function Home() {
-    const div = document.createElement('div');
-    div.className = 'flex justify-center w-full h-full bg-black text-white overflow-y-auto';
-    div.innerHTML = /*html*/`
+const POSTS_PER_PAGE = 10;
+
+export default async function Home() {
+    let cursor = 0;
+    let isLoading = false;
+    let hasMore = true;
+    
+    const container = document.createElement('div');
+    container.className = 'flex justify-center w-full h-full bg-black text-white overflow-y-auto pb-20 md:pb-0';
+    
+    container.innerHTML = /*html*/`
         <div class="w-full max-w-[470px] py-8 px-4">
-            <!-- Feed -->
-            <div class="flex flex-col gap-4 mx-auto" id="feed-container">
+            <div class="flex flex-col gap-4 mx-auto" id="feed-container"></div>
+            <div id="feed-sentinel" class="w-full py-8 flex justify-center items-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+            <div id="empty-state" class="hidden text-center py-16">
+                <i class="fa-regular fa-image text-6xl text-gray-600 mb-4"></i>
+                <p class="text-gray-400 text-lg">No posts yet</p>
+                <p class="text-gray-500 text-sm mt-2">Be the first to share something!</p>
             </div>
         </div>
     `;
 
-    const feedContainer = div.querySelector('#feed-container');
-    for (let i = 0; i < 2; i++) feedContainer.appendChild(PostSkeleton());
+    const feedContainer = container.querySelector('#feed-container');
+    const sentinel = container.querySelector('#feed-sentinel');
+    const emptyState = container.querySelector('#empty-state');
+    const session_token = getCookie('session_token');
 
-    return div;
+    // Show initial skeletons
+    for (let i = 0; i < 3; i++) {
+        feedContainer.appendChild(PostSkeleton());
+    }
+
+    // Fetch posts
+    const fetchPosts = async () => {
+        if (isLoading || !hasMore) return [];
+        isLoading = true;
+
+        try {
+            const res = await fetch(`${window.env.APP_URL}index.php/feed?limit=${window.env.PHOTOS_PER_PAGE}&cursor=${cursor}`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Authorization': `Bearer ${session_token}`
+                },
+                signal: abortController.signal
+            });
+
+            if (!res.ok) {
+                showToast('Failed to load feed', 'error');
+                return [];
+            }
+
+            const data = await res.json();
+            const posts = data.data || [];
+
+            if (posts.length < POSTS_PER_PAGE) {
+                hasMore = false;
+            }
+
+            cursor += posts.length;
+            return posts;
+        } catch (e) {
+            showToast('Failed to load feed', 'error');
+            return [];
+        } finally {
+            isLoading = false;
+        }
+    };
+
+    // Render posts
+    const renderPosts = (posts) => {
+        posts.forEach(photo => {
+            const postEl = Post({ photo });
+            feedContainer.appendChild(postEl);
+        });
+    };
+
+    // Initial load
+    const initialPosts = await fetchPosts();
+    
+    // Clear skeletons
+    feedContainer.innerHTML = '';
+    
+    if (initialPosts.length === 0) {
+        emptyState.classList.remove('hidden');
+        sentinel.classList.add('hidden');
+    } else {
+        renderPosts(initialPosts);
+    }
+
+    // Hide sentinel if no more
+    if (!hasMore) {
+        sentinel.classList.add('hidden');
+    }
+
+    // Infinite scroll with IntersectionObserver
+    const observer = new IntersectionObserver(async (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting && !isLoading && hasMore) {
+            const newPosts = await fetchPosts();
+            if (newPosts.length > 0) {
+                renderPosts(newPosts);
+            }
+            if (!hasMore) {
+                sentinel.classList.add('hidden');
+                observer.disconnect();
+            }
+        }
+    }, {
+        rootMargin: '400px',
+        threshold: 0
+    });
+
+    if (hasMore) {
+        observer.observe(sentinel);
+    }
+
+    return container;
 }

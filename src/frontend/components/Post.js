@@ -13,60 +13,184 @@
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
+import { getCookie, goTo } from '../js/Utils.js';
+import FetchCSRF from '../js/Csrf.js';
+import { showToast } from './Toast.js';
 
-export default function Post({ username, avatar, time, content, likes, caption, commentCount }) {
+/**
+ * Format relative time
+ */
+function formatRelativeTime(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffSecs = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffSecs / 60);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    const diffWeeks = Math.floor(diffDays / 7);
+
+    if (diffSecs < 60) return 'just now';
+    if (diffMins < 60) return `${diffMins}m`;
+    if (diffHours < 24) return `${diffHours}h`;
+    if (diffDays < 7) return `${diffDays}d`;
+    if (diffWeeks < 4) return `${diffWeeks}w`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+/**
+ * Post component for home feed
+ */
+export default function Post({ photo, onLikeUpdate }) {
+    const user = photo.user || { username: 'Unknown', profile_picture_url: null };
+    const avatar = user.profile_picture_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=random`;
+    const time = formatRelativeTime(photo.created_at);
+    const imageUrl = `${window.env.APP_URL}index.php/uploads?image=${photo.file_name}`;
+    
+    let isLiked = photo.is_liked_by_user || false;
+    let likesCount = photo.likes || 0;
+
     const div = document.createElement('div');
     div.className = 'border-b border-gray-800 pb-4 mb-4';
+    div.dataset.postId = photo.id;
+    
     div.innerHTML = /*html*/`
         <!-- Header -->
         <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-3">
-                <div class="rounded-full border border-black overflow-hidden w-8 h-8">
-                    <img src="${avatar}" alt="Avatar" class="w-full h-full object-cover">
-                </div>
+                <a href="/profile?user_id=${user.id}" class="rounded-full border border-gray-800 overflow-hidden w-8 h-8 hover:opacity-80 transition-opacity">
+                    <img src="${avatar}" alt="${user.username}" class="w-full h-full object-cover">
+                </a>
                 <div class="flex items-center gap-2">
-                    <span class="font-bold text-sm">${username}</span>
+                    <a href="/profile?user_id=${user.id}" class="font-bold text-sm hover:underline">${user.username}</a>
                     <span class="text-gray-500 text-sm">• ${time}</span>
                 </div>
             </div>
-            <button class="text-white hover:text-gray-400">
-                <i class="fa-solid fa-ellipsis"></i>
-            </button>
         </div>
 
-        <!-- Content -->
-        <div class="rounded-sm overflow-hidden border border-gray-800 mb-3 bg-gray-900 flex items-center justify-center aspect-[4/5]">
-             ${content}
+        <!-- Content (Image) -->
+        <div class="rounded-sm overflow-hidden border border-gray-800 mb-3 bg-gray-900 flex items-center justify-center aspect-[4/5] cursor-pointer post-image-container">
+            <img src="${imageUrl}" alt="Post by ${user.username}" class="w-full h-full object-cover">
         </div>
 
         <!-- Actions -->
         <div class="flex items-center justify-between mb-2">
             <div class="flex items-center gap-4">
-                <button class="hover:text-gray-400 transition-colors"><i class="fa-regular fa-heart text-2xl"></i></button>
-                <button class="hover:text-gray-400 transition-colors"><i class="fa-regular fa-comment text-2xl"></i></button>
-                <button class="hover:text-gray-400 transition-colors"><i class="fa-regular fa-paper-plane text-2xl"></i></button>
+                <button class="like-btn hover:text-gray-400 transition-colors ${isLiked ? 'text-red-500' : 'text-white'}">
+                    <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart text-2xl"></i>
+                </button>
+                <button class="comment-btn hover:text-gray-400 transition-colors">
+                    <i class="fa-regular fa-comment text-2xl"></i>
+                </button>
+                <button class="share-btn hover:text-gray-400 transition-colors">
+                    <i class="fa-regular fa-paper-plane text-2xl"></i>
+                </button>
             </div>
-            <button class="hover:text-gray-400 transition-colors"><i class="fa-regular fa-bookmark text-2xl"></i></button>
         </div>
 
         <!-- Likes -->
-        <div class="font-bold text-sm mb-2">${likes} likes</div>
+        <div class="font-bold text-sm mb-2 likes-count">${likesCount.toLocaleString()} likes</div>
 
         <!-- Caption -->
+        ${photo.description ? `
         <div class="text-sm mb-2">
-            <span class="font-bold mr-2">${username}</span>
-            <span class="text-gray-100">${caption}</span>
+            <a href="/profile?user_id=${user.id}" class="font-bold mr-2 hover:underline">${user.username}</a>
+            <span class="text-gray-100">${photo.description}</span>
         </div>
+        ` : ''}
 
         <!-- Comments Link -->
-        <div class="text-gray-500 text-sm cursor-pointer mb-2">View all ${commentCount} comments</div>
-
-        <!-- Add Comment -->
-        <div class="flex items-center justify-between">
-            <input type="text" placeholder="Add a comment..." class="bg-transparent text-sm w-full focus:outline-none text-gray-300 placeholder-gray-500">
-            <button class="text-gray-400 hover:text-white"><i class="fa-regular fa-face-smile"></i></button>
-        </div>
+        ${photo.comments_count > 0 ? `
+        <div class="text-gray-500 text-sm cursor-pointer mb-2 view-comments-btn hover:text-gray-400">View all ${photo.comments_count} comments</div>
+        ` : ''}
     `;
+
+    // === Event Handlers ===
+    const likeBtn = div.querySelector('.like-btn');
+    const likesCountEl = div.querySelector('.likes-count');
+    const imageContainer = div.querySelector('.post-image-container');
+    const commentBtn = div.querySelector('.comment-btn');
+    const viewCommentsBtn = div.querySelector('.view-comments-btn');
+    const shareBtn = div.querySelector('.share-btn');
+
+    // Navigate to post page
+    const openPost = () => goTo(`/post?id=${photo.id}`);
+
+    // Like toggle
+    const toggleLike = async () => {
+        likeBtn.disabled = true;
+        
+        // Optimistic update
+        isLiked = !isLiked;
+        likesCount = isLiked ? likesCount + 1 : likesCount - 1;
+        
+        likeBtn.innerHTML = `<i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart text-2xl"></i>`;
+        likeBtn.classList.toggle('text-red-500', isLiked);
+        likeBtn.classList.toggle('text-white', !isLiked);
+        likesCountEl.textContent = `${likesCount.toLocaleString()} likes`;
+
+        try {
+            const response = await fetch(`${window.env.APP_URL}index.php/toggle-like`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getCookie("session_token")}`,
+                    'X-CSRF-TOKEN': await FetchCSRF()
+                },
+                body: JSON.stringify({ photo_id: photo.id })
+            });
+
+            if (!response.ok) throw new Error('Failed to toggle like');
+            
+            if (onLikeUpdate) onLikeUpdate(photo.id, isLiked, likesCount);
+        } catch (error) {
+            // Revert on failure
+            isLiked = !isLiked;
+            likesCount = isLiked ? likesCount + 1 : likesCount - 1;
+            likeBtn.innerHTML = `<i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart text-2xl"></i>`;
+            likeBtn.classList.toggle('text-red-500', isLiked);
+            likeBtn.classList.toggle('text-white', !isLiked);
+            likesCountEl.textContent = `${likesCount.toLocaleString()} likes`;
+            showToast('Failed to update like', 'error');
+        } finally {
+            likeBtn.disabled = false;
+        }
+    };
+
+    // Click to open post, double-click to like
+    let lastClick = 0;
+    let clickTimeout = null;
+    imageContainer.onclick = (e) => {
+        const now = Date.now();
+        if (now - lastClick < 300) {
+            clearTimeout(clickTimeout);
+            if (!isLiked) {
+                toggleLike();
+            }
+        } else {
+            clickTimeout = setTimeout(() => {
+                openPost();
+            }, 300);
+        }
+        lastClick = now;
+    };
+
+    likeBtn.onclick = toggleLike;
+    if (commentBtn) commentBtn.onclick = openPost;
+    if (viewCommentsBtn) viewCommentsBtn.onclick = openPost;
+    if (shareBtn) {
+        shareBtn.onclick = async () => {
+            const postUrl = `${window.location.origin}/post?id=${photo.id}`;
+            try {
+                await navigator.clipboard.writeText(postUrl);
+                showToast('Link copied!', 'success');
+            } catch (e) {
+                showToast('Failed to copy link', 'error');
+            }
+        };
+    }
+
     return div;
 }
 
@@ -95,7 +219,6 @@ export function PostSkeleton() {
                 <div class="w-6 h-6 bg-gray-800 rounded-full"></div>
                 <div class="w-6 h-6 bg-gray-800 rounded-full"></div>
             </div>
-            <div class="w-6 h-6 bg-gray-800 rounded-full"></div>
         </div>
 
         <!-- Likes -->
