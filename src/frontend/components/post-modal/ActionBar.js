@@ -32,16 +32,10 @@ export default function ActionBar({ likes = 0, isLiked = false }) {
                     <button id="like-btn" class="hover:scale-110 transition-transform ${likeClass}">
                         <i class="${heartIcon} fa-heart text-2xl"></i>
                     </button>
-                    <button id="comment-focus-btn" class="text-white hover:text-gray-300 transition-colors hover:scale-110">
-                        <i class="fa-regular fa-comment text-2xl"></i>
-                    </button>
                     <button id="share-btn" class="text-white hover:text-gray-300 transition-colors hover:scale-110">
                         <i class="fa-regular fa-paper-plane text-2xl"></i>
                     </button>
                 </div>
-                <button id="bookmark-btn" class="text-white hover:text-gray-300 transition-colors hover:scale-110">
-                    <i class="fa-regular fa-bookmark text-2xl"></i>
-                </button>
             </div>
 
             <!-- Likes Count -->

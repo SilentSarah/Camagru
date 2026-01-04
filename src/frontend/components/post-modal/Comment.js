@@ -26,32 +26,34 @@ import { formatTimestamp } from "../../js/Utils.js";
  * @param {boolean} props.showReplyButton - Whether to show the reply button
  * @returns {string} HTML string
  */
-export default function Comment({ id, user, text, timestamp, likes = 0, showReplyButton = false }) {
-    const avatar = user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.username || 'User')}&background=random`;
+export default function Comment({ id, user, text, timestamp, showReplyButton = false, canDelete = false, onDelete }) {
+    const avatar = user?.profile_picture_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.username || 'User')}&background=random`;
     const username = user?.username || 'Anonymous';
-
-
+    const userId = user?.id;
+    const profileLink = userId ? `/profile?user_id=${userId}` : '#';
+    
     return /*html*/`
-        <div class="flex gap-3 comment-item" data-comment-id="${id}">
-            <div class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+        <div class="flex gap-3 comment-item group items-start" data-comment-id="${id}">
+            <a href="${profileLink}" class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 hover:opacity-80 transition-opacity">
                 <img src="${avatar}" alt="${username}" class="w-full h-full object-cover">
-            </div>
+            </a>
             <div class="flex-1">
                 <p class="text-sm">
-                    <span class="font-semibold text-white mr-1">${username}</span>
+                    <a href="${profileLink}" class="font-semibold text-white mr-1 hover:underline">${username}</a>
                     <span class="text-white/90">${text}</span>
                 </p>
                 <div class="flex items-center gap-4 mt-1">
                     <span class="text-gray-400 text-xs">${formatTimestamp(timestamp)}</span>
-                    <span class="text-gray-300 font-bold text-xs">${likes} likes</span>
                     ${showReplyButton ? `
                         <button class="text-gray-400 text-xs hover:text-white transition-colors comment-reply-btn">Reply</button>
                     ` : ''}
                 </div>
             </div>
-            <button class="text-gray-300 hover:text-red-400 transition-colors comment-like-btn" data-comment-id="${id}">
-                <i class="fa-regular fa-heart text-xs"></i>
-            </button>
+            ${canDelete ? `
+                <button class="text-gray-500 hover:text-red-500 transition-colors comment-delete-btn opacity-0 group-hover:opacity-100 px-2" data-delete-comment-id="${id}" title="Delete comment">
+                    <i class="fa-regular fa-trash-can text-xs"></i>
+                </button>
+            ` : ''}
         </div>
     `;
 }

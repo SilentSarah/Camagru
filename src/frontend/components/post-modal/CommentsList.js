@@ -35,16 +35,22 @@ export function CommentsEmptyState() {
  * @param {Array} props.comments - Array of comment objects {id, user, text, timestamp, likes}
  * @returns {string} HTML string
  */
-export default function CommentsList({ comments = [] }) {
+export default function CommentsList({ comments = [], isPostAuthor = false, currentUserId = null, onDelete }) {
 
-    const commentsHTML = comments.map(comment => Comment({
-        id: comment.id,
-        user: comment.user,
-        text: comment.text,
-        timestamp: comment.timestamp,
-        likes: comment.likes || 0,
-        showReplyButton: false
-    })).join('');
+    const commentsHTML = comments.map(comment => {
+        const isCommentAuthor = currentUserId && comment.user?.id === currentUserId;
+        const canDelete = isPostAuthor || isCommentAuthor;
+        
+        return Comment({
+            id: comment.id,
+            user: comment.user,
+            text: comment.content,
+            timestamp: comment.created_at,
+            showReplyButton: false,
+            canDelete,
+            onDelete
+        });
+    }).join('');
 
     return /*html*/`
         <div id="comments-list" class="space-y-4">
