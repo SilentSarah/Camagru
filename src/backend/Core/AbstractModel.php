@@ -16,12 +16,14 @@
 
 require_once "Database.php";
 
-abstract class AbstractModel {
+abstract class AbstractModel
+{
     protected ?PDO $instance;
     protected string $table;
     protected string $primaryKey = "id";
-    
-    public function __construct() {
+
+    public function __construct()
+    {
         $this->instance = Database::getInstance();
     }
 
@@ -30,7 +32,8 @@ abstract class AbstractModel {
      * @param mixed $id id of the row to find
      * @return mixed
      */
-    public function find($id): mixed {
+    public function find($id): mixed
+    {
         $query = "SELECT * FROM $this->table WHERE $this->primaryKey = ?";
         $stmt = $this->instance->prepare($query);
         $stmt->execute([$id]);
@@ -39,14 +42,27 @@ abstract class AbstractModel {
 
     /**
      * Finds all elements in the database
+     * @param mixed $criteria array of conditions
+     * @param array $orderBy array of columns to order by e.g. ['created_at' => 'DESC']
      * @param mixed $limit limit of rows to return
      * @param int $offset offset of rows to return
      * @return array
      */
-    public function findAll(array $criteria, mixed $limit = null, int $offset = 0): array {
+    public function findAll(array $criteria, array $orderBy = [], mixed $limit = null, int $offset = 0): array
+    {
         $bindings = [];
         $whereClause = $this->buildWhereClause($criteria, $bindings);
-        $query = "SELECT * FROM $this->table WHERE $whereClause";
+        $query = "SELECT * FROM $this->table";
+        if (!empty($whereClause)) {
+            $query .= " WHERE $whereClause";
+        }
+        if (!empty($orderBy)) {
+            $query .= " ORDER BY " . implode(", ", array_map(
+                fn($key, $value) => "$key {$value}",
+                array_keys($orderBy),
+                array_values($orderBy)
+            ));
+        }
         if ($limit !== null) {
             $query .= " LIMIT $limit OFFSET $offset";
         } else if ($offset > 0) {
@@ -65,7 +81,8 @@ abstract class AbstractModel {
      * @param mixed $offset offset of rows to return
      * @return array
      */
-    public function findBy(array $criteria, array $orderBy = [], $limit = null, $offset = null): mixed {
+    public function findBy(array $criteria, array $orderBy = [], $limit = null, $offset = null): mixed
+    {
         $bindings = [];
         $whereClause = $this->buildWhereClause($criteria, $bindings);
 
@@ -76,8 +93,10 @@ abstract class AbstractModel {
 
         if (!empty($orderBy)) {
             $query .= " ORDER BY " . implode(", ", array_map(
-                fn($key, $value) => "$key {$value}", 
-            array_keys($orderBy), array_values($orderBy)));
+                fn($key, $value) => "$key {$value}",
+                array_keys($orderBy),
+                array_values($orderBy)
+            ));
         }
         if ($limit !== null) {
             $query .= " LIMIT $limit";
@@ -97,7 +116,8 @@ abstract class AbstractModel {
      * @param array $bindings passed by reference to collect values
      * @return string
      */
-    private function buildWhereClause(array $criteria, array &$bindings): string {
+    private function buildWhereClause(array $criteria, array &$bindings): string
+    {
         if (empty($criteria)) {
             return "";
         }
@@ -203,7 +223,8 @@ abstract class AbstractModel {
      * @param array $data array of column data to insert
      * @return mixed
      */
-    public function create(array $data): mixed {
+    public function create(array $data): mixed
+    {
         $cols = (string)implode(", ", array_keys($data));
         $rows = (string)implode(", ", array_fill(0, count($data), "?"));
         $query = "INSERT INTO $this->table (" . $cols . ") VALUES (" . $rows . ")";
@@ -219,7 +240,8 @@ abstract class AbstractModel {
      * @param array $data array of columns to update
      * @return void
      */
-    public function update ($id, array $data): void {
+    public function update($id, array $data): void
+    {
         $keys = array_keys($data);
         $cols = implode(", ", array_map(fn($key) => "$key = ?", $keys));
         $cond = $this->primaryKey . " = ?";
@@ -233,7 +255,8 @@ abstract class AbstractModel {
      * @param mixed $id primary key of the row to delete
      * @return bool
      */
-    public function delete ($id): bool {
+    public function delete($id): bool
+    {
         $query = "DELETE FROM $this->table WHERE " . $this->primaryKey . " = ?";
         $stmt = $this->instance->prepare($query);
         return $stmt->execute([$id]);
@@ -268,9 +291,67 @@ abstract class AbstractModel {
      * @param array $params the parameters to bind to the query
      * @return array
      */
-    public function query(string $sql, array $params = []): array {
+    public function query(string $sql, array $params = []): array
+    {
         $stmt = $this->instance->prepare($sql);
         $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function count(array $criteria): int
+    {
+        $bindings = [];
+        $whereClause = $this->buildWhereClause($criteria, $bindings);
+        $query = "SELECT COUNT(*) FROM $this->table";
+        if (!empty($whereClause)) {
+            $query .= " WHERE $whereClause";
+        }
+        $stmt = $this->instance->prepare($query);
+        $stmt->execute($bindings);
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Find all records excluding those matching the given criteria
+     * @param array $excludeCriteria criteria to exclude
+     * @param array $orderBy optional order by clause
+     * @param int|null $limit optional limit
+     * @param int|null $offset optional offset
+     * @return array
+     */
+    public function findAllExcluding(array $excludeCriteria, array $orderBy = [], ?int $limit = null, ?int $offset = null): array
+    {
+        $bindings = [];
+        $whereParts = [];
+
+        foreach ($excludeCriteria as $column => $value) {
+            $whereParts[] = "$column != ?";
+            $bindings[] = $value;
+        }
+
+        $query = "SELECT * FROM $this->table";
+        if (!empty($whereParts)) {
+            $query .= " WHERE " . implode(" AND ", $whereParts);
+        }
+
+        if (!empty($orderBy)) {
+            $orderParts = [];
+            foreach ($orderBy as $column => $direction) {
+                $orderParts[] = "$column $direction";
+            }
+            $query .= " ORDER BY " . implode(", ", $orderParts);
+        }
+
+        if ($limit !== null) {
+            $query .= " LIMIT " . (int)$limit;
+        }
+
+        if ($offset !== null) {
+            $query .= " OFFSET " . (int)$offset;
+        }
+
+        $stmt = $this->instance->prepare($query);
+        $stmt->execute($bindings);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
