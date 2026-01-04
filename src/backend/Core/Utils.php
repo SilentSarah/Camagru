@@ -14,6 +14,8 @@
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
+require_once __DIR__ . "/Config.php";
+
 function isSecure()
 {
     return !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443;
@@ -21,7 +23,7 @@ function isSecure()
 
 function gen_server_url()
 {
-    return (isSecure() ? "https" : "http") . "://" . $_SERVER['SERVER_ADDR'];
+    return (isSecure() ? "https" : "http") . "://" . Config::APP_URL;
 }
 
 
@@ -61,19 +63,10 @@ class ImageHelpers
 
     public static function export_image(Imagick $image, string $mimeType)
     {
-        if (!is_dir(Config::TEMP_DIR)) {
-            mkdir(Config::TEMP_DIR, 0777, true);
-        }
-
         $image->setImageFormat(str_replace('image/', '', $mimeType));
         $blob = ($image->getNumberImages() > 1) ? $image->getImagesBlob() : $image->getImageBlob();
         $base64Data = base64_encode($blob);
         $uri = (string)"data:" . $mimeType . ";base64," . $base64Data;
-        if ($image->getNumberImages() > 1) {
-            $image->writeImages(Config::TEMP_DIR . $_SESSION["user"] . "." . $image->getImageFormat(), true);
-        } else {
-            $image->writeImage(Config::TEMP_DIR . $_SESSION["user"] . "." . $image->getImageFormat());
-        }
         return $uri;
     }
 

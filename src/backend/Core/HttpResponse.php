@@ -14,32 +14,49 @@
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
-class HttpResponse {
+class HttpResponse
+{
     private int $code;
     private ?string $message;
     private array $data;
 
-    public function __construct(int $code, ?string $message, array $data) {
+    public function __construct(int $code, ?string $message, array $data)
+    {
         $this->code = $code;
         $this->message = $message;
         $this->data = $data;
     }
 
-    public function sendJson() {
+    public function setHeader($header, $value)
+    {
+        header($header . ": " . $value);
+    }
+
+    public function sendJson()
+    {
         http_response_code($this->code);
         echo json_encode($this->data) . PHP_EOL;
     }
 
-    public function sendHtml() {
+    public function sendHtml()
+    {
         http_response_code($this->code);
         echo $this->message . PHP_EOL;
     }
+
+    public function sendRaw()
+    {
+        http_response_code($this->code);
+        echo $this->message;
+    }
 }
 
-class HttpRedirect extends HttpResponse {
+class HttpRedirect extends HttpResponse
+{
     private int $code = 302;
 
-    public function __construct(string $url) {
+    public function __construct(string $url)
+    {
         parent::__construct($this->code, null, []);
         header("Location: " . $url);
         exit;

@@ -21,14 +21,13 @@ import { showToast } from '../components/Toast.js';
  */
 export default async function FetchCSRF() {
     try {
-        const response = await fetch('http://localhost:8000/index.php/csrf' , {
+        const response = await fetch(`${window.env.APP_URL}index.php/csrf` , {
             method: 'GET',
-            credentials: 'include'
+            credentials: 'include',
         });
         const data = await response.json();
         return data.csrf_token;
     } catch (error) {
-        console.error('Error fetching CSRF token:', error);
         showToast("Couldn't fetch CSRF token, please refresh the page", "error");
         return null;
     }

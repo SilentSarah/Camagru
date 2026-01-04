@@ -22,9 +22,10 @@ export default class User {
         this.id = userdata.id;
         this.username = userdata.username;
         this.email = userdata.email;
+        this.bio = userdata.bio;
         this.fullname = userdata.fullname;
         this.is_verified = userdata.is_verified;
-        this.profile_picture_url = userdata.profile_picture_url ?? null;
+        this.profile_picture_url = userdata.profile_pic_url;
         this.created_at = userdata.created_at;
     }
 }

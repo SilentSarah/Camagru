@@ -29,11 +29,19 @@ export function getCookie(name) {
     if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
+export function deleteCookie(name) {
+    document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
+}
 
-export function formatTimestamp(timestamp) {
+export function formatTimestamp(dateStr) {
     const now = Date.now();
-    const diff = (now - timestamp) / 1000;
+    let date = dateStr;
+    if (date && !date.includes('T') && !date.includes('Z')) {
+        date = date.replace(' ', 'T') + 'Z';
+    }
+    const diff = (now - Date.parse(date)) / 1000;
     
+    if (diff < 15) return "Just now";
     if (diff < 60) return `${Math.floor(diff)}s`;
     if (diff < 3600) return `${Math.floor(diff / 60)}m`;
     if (diff < 86400) return `${Math.floor(diff / 3600)}h`;

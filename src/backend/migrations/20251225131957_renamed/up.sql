@@ -1,0 +1,4 @@
+ALTER TABLE photos ADD COLUMN file_name VARCHAR(255);
+ALTER TABLE photos MODIFY COLUMN description TEXT;
+ALTER TABLE photos MODIFY COLUMN created_at DATETIME;
+ALTER TABLE photos DROP COLUMN image_path;

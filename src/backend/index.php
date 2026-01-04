@@ -14,9 +14,13 @@
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
+
 require_once "Core/init.php";
 require_once "Controllers/AuthController.php";
 require "Controllers/MediaController.php";
+require "Controllers/CommentController.php";
+require "Controllers/LikeController.php";
+require "Controllers/SettingsController.php";
 require_once "Core/Middleware.php";
 
 $routes = [
@@ -29,7 +33,20 @@ $routes = [
     "/reset-password" => [AuthController::class, "reset_password", ["POST", "GET"], false],
     "/user" => [AuthController::class, "user", ["GET"], true],
     "/photos" => [MediaController::class, "get_photos", ["GET"], true],
+    "/photo" => [MediaController::class, "get_photo", ["GET"], true],
+    "/feed" => [MediaController::class, "get_feed", ["GET"], true],
     "/process-image" => [MediaController::class, "process_image", ["POST"], true],
+    "/upload-post" => [MediaController::class, "upload_post", ["POST"], true],
+    "/uploads" => [MediaController::class, "render_photo", ["GET"], false],
+    "/delete-post" => [MediaController::class, "delete_post", ["DELETE"], true],
+    "/create-comment" => [CommentController::class, "create", ["POST"], true],
+    "/delete-comment" => [CommentController::class, "delete", ["DELETE"], true],
+    "/toggle-like" => [LikeController::class, "toggle", ["POST"], true],
+    "/update-account" => [SettingsController::class, "update_settings", ["POST"], true],
+    "/delete-account" => [SettingsController::class, "delete_account", ["DELETE"], true],
+    "/upload-profile-picture" => [MediaController::class, "upload_profile_picture", ["POST"], true],
+    "/search-users" => [AuthController::class, "search_users", ["GET"], true],
+    "/user-profile" => [AuthController::class, "get_user_profile", ["GET"], true],
 ];
 
 $method = $_SERVER['REQUEST_METHOD'];
