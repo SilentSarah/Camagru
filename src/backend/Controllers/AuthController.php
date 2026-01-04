@@ -35,7 +35,7 @@ class AuthController
             ]);
             $response->sendJson();
         }
-
+        $username = trim($username);
         try {
             $user = new User();
             $user->findByPersonalDetails(["username" => $username]);
@@ -84,12 +84,7 @@ class AuthController
 
     public function register()
     {
-        $username = $_POST["username"];
-        $password = $_POST["password"];
-        $fullname = $_POST["fullname"];
-        $email = $_POST["email"];
-
-        if (empty($username) || empty($password) || empty($fullname) || empty($email)) {
+        if (empty($_POST["username"]) || empty($_POST["password"]) || empty($_POST["fullname"]) || empty($_POST["email"])) {
             $response = new HttpResponse(400, "Bad Request", [
                 "error" => "Missing required fields",
                 "code" => "BAD_REQUEST"
@@ -97,6 +92,9 @@ class AuthController
             $response->sendJson();
             return;
         }
+        $_POST["username"] = trim($_POST["username"]);
+        $_POST["fullname"] = trim($_POST["fullname"]);
+        $_POST["email"] = trim($_POST["email"]);
 
         $validator = Validator::getInstance();
         $errors = $validator->validate($_POST);
@@ -112,12 +110,12 @@ class AuthController
 
         try {
             $user = new User();
-            $password_hashed = password_hash($password, PASSWORD_BCRYPT);
+            $password_hashed = password_hash($_POST["password"], PASSWORD_BCRYPT);
             $user->create([
-                "username" => $username,
+                "username" => $_POST["username"],
                 "password" => $password_hashed,
-                "fullname" => $fullname,
-                "email" => $email,
+                "fullname" => $_POST["fullname"],
+                "email" => $_POST["email"],
                 "is_verified" => 0,
             ]);
 
@@ -203,7 +201,8 @@ class AuthController
     public function request_verification()
     {
         $user = new User();
-        $user->findByPersonalDetails(["email" => $_POST["email"]]);
+        $email = trim($_POST["email"]);
+        $user->findByPersonalDetails(["email" => $email]);
 
         if ($user->getId() === null) {
             $response = new HttpResponse(404, "User not found", ["error" => "User not found", "code" => "USER_NOT_FOUND"]);
@@ -251,11 +250,17 @@ class AuthController
         $id = $_SESSION["user"];
         try {
             $user = new User()->find($id);
+            if ($user->getId() === null) {
+                $response = new HttpResponse(404, "User not found", ["error" => "User not found", "code" => "USER_NOT_FOUND"]);
+                $response->sendJson();
+                return;
+            }
             $data = [
                 "id" => $user->getId(),
                 "fullname" => $user->getFullname(),
                 "username" => $user->getUsername(),
                 "email" => $user->getEmail(),
+                "bio" => $user->getBio(),
                 "is_verified" => $user->isVerified(),
                 "profile_pic_url" => $user->getProfilePicUrl() ?? null,
                 "created_at" => $user->getCreatedAt()
@@ -269,7 +274,71 @@ class AuthController
         }
     }
 
-    public function request_password_recovery() {
+    public function search_users()
+    {
+        $query = isset($_GET['q']) ? trim($_GET['q']) : '';
+
+        if (strlen($query) < 2) {
+            $response = new HttpResponse(200, "OK", ["users" => []]);
+            $response->sendJson();
+            return;
+        }
+
+        // Sanitize query
+        $query = htmlspecialchars($query, ENT_QUOTES, 'UTF-8');
+
+        try {
+            $db = Database::getInstance();
+            $stmt = $db->prepare("SELECT id, username, fullname, profile_pic_url FROM users WHERE username LIKE :query OR fullname LIKE :query LIMIT 20");
+            $searchTerm = '%' . $query . '%';
+            $stmt->execute(['query' => $searchTerm]);
+            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $response = new HttpResponse(200, "OK", ["users" => $users]);
+            $response->sendJson();
+        } catch (PDOException $e) {
+            $response = new HttpResponse(500, "Internal Error", ["error" => "Search failed"]);
+            $response->sendJson();
+        }
+    }
+
+    public function get_user_profile()
+    {
+        $userId = isset($_GET['user_id']) ? (int)$_GET['user_id'] : null;
+
+        if (!$userId) {
+            $response = new HttpResponse(400, "Bad Request", ["error" => "User ID required"]);
+            $response->sendJson();
+            return;
+        }
+
+        try {
+            $user = new User()->find($userId);
+
+            if (!$user->getId()) {
+                $response = new HttpResponse(404, "Not Found", ["error" => "User not found"]);
+                $response->sendJson();
+                return;
+            }
+
+            $data = [
+                "id" => $user->getId(),
+                "fullname" => $user->getFullname(),
+                "username" => $user->getUsername(),
+                "bio" => $user->getBio(),
+                "profile_pic_url" => $user->getProfilePicUrl() ?? null,
+            ];
+
+            $response = new HttpResponse(200, "OK", ["user" => $data]);
+            $response->sendJson();
+        } catch (PDOException $e) {
+            $response = new HttpResponse(500, "Internal Error", ["error" => "Failed to get user"]);
+            $response->sendJson();
+        }
+    }
+
+    public function request_password_recovery()
+    {
         $email = $_POST["email"];
         if (empty($email)) {
             $response = new HttpResponse(400, "Bad Request", ["error" => "Missing email", "code" => "BAD_REQUEST"]);
@@ -304,7 +373,8 @@ class AuthController
         $response->sendJson();
     }
 
-    public function reset_password() {
+    public function reset_password()
+    {
         $method = $_SERVER['REQUEST_METHOD'];
         $token = $_GET["token"];
 
@@ -315,7 +385,7 @@ class AuthController
         }
 
         if ($method === "GET") {
-            $user = new User()->findByPersonalDetails(["reset_token"=> $token]);
+            $user = new User()->findByPersonalDetails(["reset_token" => $token]);
             if ($user->getId() === null) {
                 $response = new HttpResponse(404, "User not found", ["error" => "User not found", "code" => "USER_NOT_FOUND"]);
                 $response->sendJson();
@@ -333,7 +403,7 @@ class AuthController
             $response = new HttpResponse(200, "success", ["user_id" => $user->getId()]);
             $response->sendJson();
         } else if ($method === "POST") {
-            $user = new User()->findByPersonalDetails(["reset_token"=> $token]);
+            $user = new User()->findByPersonalDetails(["reset_token" => $token]);
             if ($user->getId() === null) {
                 $response = new HttpResponse(404, "User not found", ["error" => "User not found", "code" => "USER_NOT_FOUND"]);
                 $response->sendJson();
