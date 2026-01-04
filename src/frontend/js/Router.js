@@ -22,9 +22,13 @@ import Verify from '../pages/Verify.js';
 import PasswordRecovery from '../pages/PasswordRecovery.js';
 import ResetPassword from '../pages/ResetPassword.js';
 import Profile from '../pages/Profile.js';
+import Settings from '../pages/Settings.js';
+import EditorPage from '../pages/EditorPage.js';
+import PostPage from '../pages/PostPage.js';
 import { useUser, user } from './Auth.js';
 import { goTo, injectTooltips } from './Utils.js';
 import Sidebar from '../components/Sidebar.js';
+import MobileBottomBar from '../components/MobileBottomBar.js';
 
 export const routes = [
     {
@@ -70,6 +74,24 @@ export const routes = [
         component: Profile
     },
     {
+        path: '/settings',
+        title: 'Settings',
+        protected: true,
+        component: Settings
+    },
+    {
+        path: '/editor',
+        title: 'Photo Editor',
+        protected: true,
+        component: EditorPage
+    },
+    {
+        path: '/post',
+        title: 'View Post',
+        protected: true,
+        component: PostPage
+    },
+    {
         path: '/404',
         title: 'Not found',
         protected: false,
@@ -77,7 +99,16 @@ export const routes = [
     },
 ]
 
+/**
+ * @type {IntersectionObserver}
+ */
 let observer = null;
+
+/**
+ * @type {AbortController}
+ */
+export let abortController = null;
+
 export function InjectAnchors(anchor) {
     if (anchor) {
         anchor.onclick = (event) => {
@@ -113,19 +144,37 @@ function initObserver() {
     observer.observe(document.body, { childList: true, subtree: true });
 }
 
+function destroyAbortController() {
+    if (abortController) {
+        abortController.abort("Route change");
+        abortController = null;
+    }
+}
+
+function createAbortController() {
+    abortController = new AbortController();
+}
+
 
 async function Router() {
     const parentComp = document.body;
-    const route = routes.find(r => r.path === window.location.pathname) ?? routes[routes.length - 1];
+    let route = routes.find(r => r.path === window.location.pathname) ?? routes[routes.length - 1];
 
+    destroyAbortController();
+    createAbortController();
     parentComp.innerHTML = '';
 
     destroyObserver();
     initObserver();
-    if (await useUser(route)) parentComp.appendChild(Sidebar());
-
+    if (await useUser(route)) {
+        parentComp.appendChild(Sidebar());
+        parentComp.appendChild(MobileBottomBar());
+    } else if (route.protected) {
+        route = routes.at(0);
+    }
+    
     parentComp.appendChild(await route.component());
     document.title = "Camagru | " + route.title;
-}   
+}
 
 export default Router
