@@ -201,20 +201,20 @@ The backend handles image composition to ensure high-quality output and support 
 
 All image processing logic is encapsulated in the static `ImageHelpers` class.
 
-1.  **`process_image`**: The main entry point. Receives the base64 image, sticker data, and filter string.
-2.  **`process_stickers`**:
-    - Decodes base64 sticker images.
-    - Scales stickers relative to the main image width, matching the frontend's visual proportion.
-    - Composites stickers onto the main image using `Imagick::compositeImage`.
-3.  **`process_filters`**:
-    - Parses the CSS filter string (e.g., `sepia(80%) contrast(1.2)`).
-    - Maps CSS filters to Imagick operations:
-      - **Grayscale**: Uses `modulateImage(100, 100 - value, 100)` to respect intensity.
-      - **Sepia**: Uses a custom 6x6 color matrix (`applySepiaFilter`) to exactly match CSS `sepia()`.
-      - **Brightness**: Uses a custom scaling matrix (`applyBrightnessFilter`) to exactly match CSS `brightness()`.
-      - **Hue Rotate**: Uses a standard W3C rotation matrix (`applyHueRotateFilter`) to exactly match CSS `hue-rotate()`.
-      - **Contrast**: Uses `brightnessContrastImage`.
-      - **Saturate**: Uses `modulateImage`.
+1. **`process_image`**: The main entry point. Receives the base64 image, sticker data, and filter string.
+2. **`process_stickers`**:
+   - Decodes base64 sticker images.
+   - Scales stickers relative to the main image width, matching the frontend's visual proportion.
+   - Composites stickers onto the main image using `Imagick::compositeImage`.
+3. **`process_filters`**:
+   - Parses the CSS filter string (e.g., `sepia(80%) contrast(1.2)`).
+   - Maps CSS filters to Imagick operations:
+     - **Grayscale**: Uses `modulateImage(100, 100 - value, 100)` to respect intensity.
+     - **Sepia**: Uses a custom 6x6 color matrix (`applySepiaFilter`) to exactly match CSS `sepia()`.
+     - **Brightness**: Uses a custom scaling matrix (`applyBrightnessFilter`) to exactly match CSS `brightness()`.
+     - **Hue Rotate**: Uses a standard W3C rotation matrix (`applyHueRotateFilter`) to exactly match CSS `hue-rotate()`.
+     - **Contrast**: Uses `brightnessContrastImage`.
+     - **Saturate**: Uses `modulateImage`.
 
 ---
 
@@ -334,7 +334,7 @@ export default function CameraView() {
             <!-- Preview Container -->
             <div class="camera-preview-wrapper relative bg-gray-900 rounded-lg 
                         overflow-hidden aspect-video max-h-[320px] mx-auto">
-                
+
                 <!-- Live Video Preview -->
                 <video 
                     id="camera-video" 
@@ -369,7 +369,7 @@ export default function CameraView() {
                     <p>Accessing camera...</p>
                 </div>
             </div>
-            
+
             <!-- Filter and Sticker controls below -->
             ${FilterList({ selectedFilter: "normal" })}
             ${StickerList({ selectedSticker: null })}
@@ -474,7 +474,7 @@ export default function FilterList({ selectedFilter = "normal" }) {
                 <span>Filters</span>
                 <span id="active-filter-badge">Normal</span>
             </button>
-            
+
             <!-- Filter grid (hidden by default) -->
             <div id="filter-accordion-content" class="hidden">
                 <div class="flex gap-2 p-3 overflow-x-auto">
@@ -746,23 +746,24 @@ const addCustomStickerToPreview = (imageDataUrl, containerId) => {
 
 When the user saves the photo, `processImageWithStickers` is called:
 
-1.  **Prepare Data**:
+1. **Prepare Data**:
+   
+   - **Image**: Original base64 data URL.
+   - **Filters**: The active CSS filter string.
+   - **Stickers**: Array of sticker objects.
+     - `x`, `y`: Relative positions.
+     - `scale`: Calculated relative to the visual canvas width (128px base size).
+     - `imageUrl`: Base64 data of the custom sticker.
 
-    - **Image**: Original base64 data URL.
-    - **Filters**: The active CSS filter string.
-    - **Stickers**: Array of sticker objects.
-      - `x`, `y`: Relative positions.
-      - `scale`: Calculated relative to the visual canvas width (128px base size).
-      - `imageUrl`: Base64 data of the custom sticker.
+2. **Send Request**:
+   
+   - POST to `/process-image`.
+   - Payload includes `image`, `filter`, `stickers`, `canvasWidth`, `canvasHeight`.
 
-2.  **Send Request**:
-
-    - POST to `/process-image`.
-    - Payload includes `image`, `filter`, `stickers`, `canvasWidth`, `canvasHeight`.
-
-3.  **Receive Result**:
-    - Backend returns a JSON object with the processed image URL (`data:image/...`).
-    - If backend fails, falls back to frontend canvas baking (for static images only).
+3. **Receive Result**:
+   
+   - Backend returns a JSON object with the processed image URL (`data:image/...`).
+   - If backend fails, falls back to frontend canvas baking (for static images only).
 
 ### Data Flow Diagram
 
@@ -1139,11 +1140,11 @@ Capture: Loop through placedStickers
 
 The photo modal system is a complex but well-organized component that handles:
 
-1.  **Camera Access** via MediaDevices API with comprehensive error handling
-2.  **Live Preview** with CSS mirroring and filter application
-3.  **Filters** defined as CSS filter strings, applied to both video and stickers
-4.  **Stickers** with drag, resize, and delete functionality for both emoji and custom images
-5.  **Image Composition** using Canvas API to merge video frame + filter + stickers
-6.  **Validation** at multiple levels: file type, size, dimensions, sticker count
+1. **Camera Access** via MediaDevices API with comprehensive error handling
+2. **Live Preview** with CSS mirroring and filter application
+3. **Filters** defined as CSS filter strings, applied to both video and stickers
+4. **Stickers** with drag, resize, and delete functionality for both emoji and custom images
+5. **Image Composition** using Canvas API to merge video frame + filter + stickers
+6. **Validation** at multiple levels: file type, size, dimensions, sticker count
 
 All state is managed within the PhotoModal function closure, making the component self-contained and easy to integrate.
