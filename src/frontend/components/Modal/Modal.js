@@ -12,8 +12,12 @@
  * @param {HTMLElement|string} props.children - Modal content
  * @returns {HTMLElement} The modal overlay element
  */
-export default function Modal({ isOpen = true, onClose, title, children, className = '', hideCloseButton = false }) {
+export default function Modal({ isOpen = true, onClose, title, children, className = '', hideCloseButton = false, externalClose = false }) {
     if (!isOpen) return document.createDocumentFragment();
+
+    // Prevent background scrolling
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
 
     const overlay = document.createElement('div');
     overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity opacity-0';
@@ -55,11 +59,22 @@ export default function Modal({ isOpen = true, onClose, title, children, classNa
 
     // Add close button if no title (floating close)
     if (!title && !hideCloseButton) {
-        const floatClose = document.createElement('button');
-        floatClose.className = 'absolute top-4 right-4 text-white hover:text-gray-300 z-50 bg-black/50 rounded-full w-8 h-8 flex items-center justify-center backdrop-blur-md';
-        floatClose.innerHTML = '<i class="fa-solid fa-xmark"></i>';
-        floatClose.onclick = () => close();
-        content.appendChild(floatClose);
+        if (externalClose) {
+            const extClose = document.createElement('button');
+            extClose.className = 'absolute top-6 right-6 text-white hover:text-gray-300 z-50 w-10 h-10 flex items-center justify-center transition-transform hover:scale-110';
+            extClose.innerHTML = '<i class="fa-solid fa-xmark text-2xl"></i>';
+            extClose.onclick = (e) => {
+                e.stopPropagation();
+                close();
+            };
+            overlay.appendChild(extClose);
+        } else {
+            const floatClose = document.createElement('button');
+            floatClose.className = 'absolute top-4 right-4 text-white hover:text-gray-300 z-50 w-8 h-8 flex items-center justify-center';
+            floatClose.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+            floatClose.onclick = () => close();
+            content.appendChild(floatClose);
+        }
     }
 
     container.appendChild(content);
@@ -79,6 +94,7 @@ export default function Modal({ isOpen = true, onClose, title, children, classNa
         
         setTimeout(() => {
             overlay.remove();
+            document.body.style.overflow = originalOverflow;
             if (onClose) onClose();
         }, 200);
     };
