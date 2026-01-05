@@ -262,6 +262,7 @@ class AuthController
                 "email" => $user->getEmail(),
                 "bio" => $user->getBio(),
                 "is_verified" => $user->isVerified(),
+                "email_notifications" => $user->getEmailNotifications(),
                 "profile_pic_url" => $user->getProfilePicUrl() ?? null,
                 "created_at" => $user->getCreatedAt()
             ];
