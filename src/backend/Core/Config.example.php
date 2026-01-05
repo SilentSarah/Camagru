@@ -78,4 +78,8 @@ class Config
     {
         self::$VERIFICATION_EMAIL = file_get_contents($path);
     }
+
+    public static function setPostEmailTemplate(string $path): void {
+        self::$POST_NOTIFICATION_EMAIL = file_get_contents($path);
+    }
 }

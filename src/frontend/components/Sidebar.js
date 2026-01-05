@@ -38,10 +38,12 @@ export default function Sidebar() {
                 <i class="fa-solid fa-magnifying-glass text-xl w-6 text-center"></i>
                 <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300">Search</span>
             </button>
-            <a href="#" class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-900 transition-colors whitespace-nowrap">
+            <!--
+            <button id="notifications" class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-900 transition-colors whitespace-nowrap">
                 <i class="fa-regular fa-heart text-xl w-6 text-center"></i>
                 <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300">Notifications</span>
-            </a>
+            </button>
+            -->
             <button id="create_post" class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-900 transition-colors whitespace-nowrap">
                 <i class="fa-regular fa-square-plus text-xl w-6 text-center"></i>
                 <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300">Create</span>
