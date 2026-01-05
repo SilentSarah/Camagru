@@ -18,8 +18,6 @@ import { getCookie } from '../js/Utils.js';
 import { showToast } from '../components/Toast.js';
 import { abortController } from '../js/Router.js';
 
-const POSTS_PER_PAGE = 10;
-
 export default async function Home() {
     let cursor = 0;
     let isLoading = false;
@@ -75,7 +73,7 @@ export default async function Home() {
             const data = await res.json();
             const posts = data.data || [];
 
-            if (posts.length < POSTS_PER_PAGE) {
+            if (posts.length < window.env.PHOTOS_PER_PAGE) {
                 hasMore = false;
             }
 
@@ -129,8 +127,9 @@ export default async function Home() {
             }
         }
     }, {
-        rootMargin: '400px',
-        threshold: 0
+        root: container,
+        rootMargin: '200px',
+        threshold: 0.1
     });
 
     if (hasMore) {
