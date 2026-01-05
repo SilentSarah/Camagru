@@ -1,8 +1,11 @@
 <?php
 
 require_once __DIR__ . "/../Models/Comment.php";
+require_once __DIR__ . "/../Models/Photo.php";
+require_once __DIR__ . "/../Models/User.php";
 require_once __DIR__ . "/../Core/HttpResponse.php";
 require_once __DIR__ . "/../Core/Utils.php";
+require_once __DIR__ . "/../Core/NotificationMailer.php";
 
 class CommentController
 {
@@ -24,13 +27,28 @@ class CommentController
 
         try {
             $comment = new Comment();
+            $commentContent = htmlspecialchars(trim($data['content']));
             $commentData = [
                 'photo_id' => $data['photo_id'],
                 'user_id' => $_SESSION['user'],
-                'content' => htmlspecialchars(trim($data['content'])),
+                'content' => $commentContent,
                 'created_at' => gmdate("Y-m-d H:i:s")
             ];
             $created = $comment->create($commentData);
+
+            try {
+                $photo = new Photo()->find($data['photo_id']);
+                if ($photo && $photo->getUserId()) {
+                    $postOwner = new User()->find($photo->getUserId());
+                    $commenter = new User()->find($_SESSION['user']);
+
+                    if ($postOwner && $commenter) {
+                        NotificationMailer::sendCommentNotification($postOwner, $commenter, $photo, $commentContent);
+                    }
+                }
+            } catch (Exception $e) {
+            }
+
             $response = new HttpResponse(201, "Created", ["message" => "Comment added", "data" => $created]);
             $response->sendJson();
         } catch (Exception $e) {
