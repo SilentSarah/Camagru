@@ -77,6 +77,13 @@ class SettingsController
             $user->setPassword(password_hash($data['password'], PASSWORD_BCRYPT));
         }
 
+        // Handle email notifications toggle
+        if (isset($data['email_notifications'])) {
+            $emailNotifications = filter_var($data['email_notifications'], FILTER_VALIDATE_BOOLEAN);
+            $user->setEmailNotifications($emailNotifications);
+            $edited_data['email_notifications'] = $emailNotifications;
+        }
+
         if (!empty($errors)) {
             $response = new HttpResponse(400, "Validation failed", ["error" => $errors[0]]);
             $response->sendJson();

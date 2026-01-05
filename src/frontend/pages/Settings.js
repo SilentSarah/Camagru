@@ -7,7 +7,7 @@ import { abortController } from '../js/Router.js';
 
 export default async function Settings() {
     const container = document.createElement('div');
-    container.className = 'min-h-screen w-full bg-black text-white p-4 md:p-8 flex flex-col md:ml-16';
+    container.className = 'min-h-screen w-full bg-black text-white p-4 md:p-8 pb-24 md:pb-8 flex flex-col md:ml-16 overflow-y-auto';
 
     // Main content wrapper
     const content = document.createElement('div');
@@ -78,6 +78,50 @@ export default async function Settings() {
     // Password
     const passwordGroup = createInputGroup('New Password', 'password', 'password', '', 'Leave blank to keep current');
     form.appendChild(passwordGroup);
+
+    // Email Notifications Toggle
+    const notificationGroup = document.createElement('div');
+    notificationGroup.className = 'flex items-center justify-between bg-[#262626] rounded-xl px-4 py-4';
+    
+    const notificationLabel = document.createElement('div');
+    notificationLabel.className = 'flex flex-col';
+    const notificationTitle = document.createElement('span');
+    notificationTitle.className = 'text-sm font-medium text-white';
+    notificationTitle.textContent = 'Email Notifications';
+    const notificationDesc = document.createElement('span');
+    notificationDesc.className = 'text-xs text-gray-500';
+    notificationDesc.textContent = 'Get notified when someone likes or comments on your posts';
+    notificationLabel.appendChild(notificationTitle);
+    notificationLabel.appendChild(notificationDesc);
+    
+    const toggleWrapper = document.createElement('label');
+    toggleWrapper.className = 'relative inline-flex items-center cursor-pointer';
+    
+    const toggleInput = document.createElement('input');
+    toggleInput.type = 'checkbox';
+    toggleInput.name = 'email_notifications';
+    toggleInput.checked = user.email_notifications !== false; // Default to true
+    toggleInput.className = 'sr-only peer';
+    
+    const toggleSlider = document.createElement('div');
+    toggleSlider.className = `w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer 
+        peer-checked:after:translate-x-full peer-checked:after:border-white 
+        after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
+        after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all 
+        peer-checked:bg-blue-600`;
+    
+    toggleWrapper.appendChild(toggleInput);
+    toggleWrapper.appendChild(toggleSlider);
+    
+    notificationGroup.appendChild(notificationLabel);
+    notificationGroup.appendChild(toggleWrapper);
+    form.appendChild(notificationGroup);
+
+    // Listen for toggle changes
+    toggleInput.onchange = () => {
+        saveBtn.disabled = false;
+        saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    };
 
     // Hidden file input for profile picture
     const fileInput = document.createElement('input');
@@ -171,6 +215,9 @@ export default async function Settings() {
             
             // Remove empty password if not set
             if (!data.password) delete data.password;
+            
+            // Handle checkbox - FormData only includes it if checked, so set explicitly
+            data.email_notifications = toggleInput.checked ? 'true' : 'false';
 
             const csrfToken = await FetchCSRF();
             if (!csrfToken) throw new Error('CSRF Token failed');

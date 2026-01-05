@@ -23,6 +23,7 @@ export default class User {
         this.username = userdata.username;
         this.email = userdata.email;
         this.bio = userdata.bio;
+        this.email_notifications = userdata.email_notifications;
         this.fullname = userdata.fullname;
         this.is_verified = userdata.is_verified;
         this.profile_picture_url = userdata.profile_pic_url;

@@ -24,6 +24,7 @@ class User extends AbstractModel
     private ?string $fullname = null;
     private ?string $bio = null;
     private bool $is_verified = false;
+    private bool $email_notifications = true;
     private ?string $verification_token = null;
     private ?string $profile_pic_url = null;
     private ?int $verification_token_gen_date = null;
@@ -43,6 +44,7 @@ class User extends AbstractModel
         $this->bio = null;
         $this->profile_pic_url = null;
         $this->is_verified = false;
+        $this->email_notifications = true;
         $this->verification_token = null;
         $this->verification_token_gen_date = null;
         $this->reset_token = null;
@@ -102,6 +104,10 @@ class User extends AbstractModel
     {
         return $this->bio;
     }
+    public function getEmailNotifications(): bool
+    {
+        return $this->email_notifications;
+    }
     public function setProfilePicUrl(?string $profile_pic_url): void
     {
         $this->profile_pic_url = $profile_pic_url;
@@ -109,6 +115,10 @@ class User extends AbstractModel
     public function setBio(?string $bio): void
     {
         $this->bio = $bio;
+    }
+    public function setEmailNotifications(bool $email_notifications): void
+    {
+        $this->email_notifications = $email_notifications;
     }
     public function setVerificationToken(string $verification_token): void
     {
@@ -170,6 +180,7 @@ class User extends AbstractModel
             $this->reset_token = $row['reset_token'];
             $this->profile_pic_url = $row['profile_pic_url'];
             $this->bio = $row['bio'] ?? null;
+            $this->email_notifications = (bool)($row['email_notifications'] ?? true);
             $this->reset_token_expires = $row['reset_token_expires'];
             $this->created_at = new DateTime($row['created_at']);
         }
@@ -199,6 +210,7 @@ class User extends AbstractModel
             'password' => $this->password,
             'fullname' => $this->fullname,
             'is_verified' => (int)$this->is_verified,
+            'email_notifications' => (int)$this->email_notifications,
             'verification_token' => $this->verification_token,
             'verification_token_gen_date' => $this->verification_token_gen_date,
             'reset_token' => $this->reset_token,
@@ -228,6 +240,7 @@ class User extends AbstractModel
             $this->verification_token = $data['verification_token'];
             $this->profile_pic_url = $data['profile_pic_url'];
             $this->bio = $data['bio'] ?? null;
+            $this->email_notifications = (bool)($data['email_notifications'] ?? true);
             $this->reset_token = $data['reset_token'];
             $this->reset_token_expires = $data['reset_token_expires'];
             $this->created_at = new DateTime($data['created_at']);
