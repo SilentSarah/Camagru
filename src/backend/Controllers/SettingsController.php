@@ -77,7 +77,6 @@ class SettingsController
             $user->setPassword(password_hash($data['password'], PASSWORD_BCRYPT));
         }
 
-        // Handle email notifications toggle
         if (isset($data['email_notifications'])) {
             $emailNotifications = filter_var($data['email_notifications'], FILTER_VALIDATE_BOOLEAN);
             $user->setEmailNotifications($emailNotifications);
@@ -113,7 +112,6 @@ class SettingsController
 
         try {
             if ($user->delete($userId)) {
-                // Destroy session
                 $_SESSION = array();
                 if (ini_get("session.use_cookies")) {
                     $params = session_get_cookie_params();

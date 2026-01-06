@@ -50,11 +50,3 @@ export function formatTimestamp(dateStr) {
     if (diff < (86400 * 365)) return `${Math.floor(diff / (86400 * 30))}mo`;
     return `${Math.floor(diff / (86400 * 365))}y`;
 }
-
-export function injectTooltips() {
-    const tooltips = document.querySelectorAll("[data-tooltip]");
-    tooltips.forEach(tooltip => {
-        const text = tooltip.getAttribute('data-tooltip');
-        tooltip.innerHTML = Tooltip({ text });
-    });
-}

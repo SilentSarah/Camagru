@@ -26,7 +26,6 @@ import Settings from '../pages/Settings.js';
 import EditorPage from '../pages/EditorPage.js';
 import PostPage from '../pages/PostPage.js';
 import { useUser, user } from './Auth.js';
-import { goTo, injectTooltips } from './Utils.js';
 import Sidebar from '../components/Sidebar.js';
 import MobileBottomBar from '../components/MobileBottomBar.js';
 
@@ -105,7 +104,7 @@ export const routes = [
 let observer = null;
 
 /**
- * @type {AbortController}
+ * @type {AbortController | null}
  */
 export let abortController = null;
 

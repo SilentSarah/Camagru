@@ -29,14 +29,12 @@ class Notification extends AbstractModel
         $this->table = "notifications";
     }
 
-    // Getters
     public function getId(): int { return $this->id; }
     public function getUserId(): int { return $this->user_id; }
     public function getMessage(): string { return $this->message; }
     public function isRead(): bool { return $this->is_read; }
     public function getCreatedAt(): ?string { return $this->created_at; }
 
-    // Setters
     public function setId(int $id): void { $this->id = $id; }
     public function setUserId(int $user_id): void { $this->user_id = $user_id; }
     public function setMessage(string $message): void { $this->message = $message; }

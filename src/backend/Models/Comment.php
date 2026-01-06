@@ -41,7 +41,6 @@ class Comment extends AbstractModel implements JsonSerializable
         $this->table = "comments";
     }
 
-    // Getters
     public function getId(): int
     {
         return $this->id;
@@ -63,7 +62,6 @@ class Comment extends AbstractModel implements JsonSerializable
         return $this->created_at;
     }
 
-    // Setters
     public function setId(int $id): void
     {
         $this->id = $id;

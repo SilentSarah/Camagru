@@ -28,13 +28,10 @@ class Like extends AbstractModel
         $this->table = "likes";
     }
 
-    // Getters
     public function getId(): int { return $this->id; }
     public function getPhotoId(): int { return $this->photo_id; }
     public function getUserId(): int { return $this->user_id; }
     public function getCreatedAt(): ?string { return $this->created_at; }
-
-    // Setters
     public function setId(int $id): void { $this->id = $id; }
     public function setPhotoId(int $photo_id): void { $this->photo_id = $photo_id; }
     public function setUserId(int $user_id): void { $this->user_id = $user_id; }

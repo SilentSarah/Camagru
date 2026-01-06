@@ -25,9 +25,11 @@ export default function MobileBottomBar() {
             <i class="fa-regular fa-square-plus text-2xl"></i>
         </button>
 
+        <!-- Likes
         <a href="#" class="flex-1 flex justify-center items-center p-2 rounded-lg hover:bg-gray-900 transition-colors">
             <i class="fa-regular fa-heart text-xl"></i>
         </a>
+        -->
 
         <!-- Profile / Menu -->
         <div class="relative flex-1 flex justify-center items-center">
@@ -70,13 +72,11 @@ export default function MobileBottomBar() {
     const menuToggle = div.querySelector('#profile_menu_toggle');
     const menu = div.querySelector('#profile_menu');
 
-    // Toggle popover
     menuToggle.onclick = (e) => {
         e.stopPropagation();
         menu.classList.toggle('hidden');
     };
 
-    // Close when clicking outside
     document.onclick = () => menu.classList.add('hidden');
 
     div.querySelector('#go_profile_mobile').onclick = () => {

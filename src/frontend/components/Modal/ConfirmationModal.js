@@ -79,7 +79,7 @@ export function openConfirmationModal({ title = 'Confirmation', message, confirm
         onClose: handleClose,
         title: null,
         children: content,
-        className: 'w-auto p-0 bg-transparent shadow-none', // Important to remove default modal padding and bg
+        className: 'w-auto p-0 bg-transparent shadow-none',
         hideCloseButton: true
     });
 

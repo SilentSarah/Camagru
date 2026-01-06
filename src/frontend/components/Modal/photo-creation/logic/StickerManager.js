@@ -34,7 +34,6 @@ export class StickerManager {
         
         this.layer.appendChild(el);
 
-        // Initial Transform
         const scale = data.scale || 1;
         if (data.x !== undefined && data.y !== undefined) {
             el.style.left = `${data.x * 100}%`;
@@ -88,7 +87,6 @@ export class StickerManager {
     _setupInteractions(stickerObj) {
         const el = stickerObj.element;
         
-        // --- Drag ---
         let isDragging = false;
         let startMouseX, startMouseY;
         let startObjX, startObjY;
@@ -107,7 +105,7 @@ export class StickerManager {
             startObjY = stickerObj.y;
             
             el.style.cursor = 'grabbing';
-            e.stopPropagation(); // Prevent propagation issues
+            e.stopPropagation();
         };
 
         const onGlobalMove = (e) => {
@@ -119,11 +117,9 @@ export class StickerManager {
             const deltaX = e.clientX - startMouseX;
             const deltaY = e.clientY - startMouseY;
 
-            // Convert delta pixels to percentage
             let newX = startObjX + (deltaX / layerRect.width);
             let newY = startObjY + (deltaY / layerRect.height);
             
-            // Clamp to bounds (0-1)
             newX = Math.max(0, Math.min(1, newX));
             newY = Math.max(0, Math.min(1, newY));
 
@@ -145,7 +141,6 @@ export class StickerManager {
         document.addEventListener('mousemove', onGlobalMove);
         document.addEventListener('mouseup', onGlobalUp);
 
-        // --- Resize ---
         const resizeHandle = el.querySelector('.sticker-resize');
         
         const onResizeStart = (e) => {
@@ -172,14 +167,9 @@ export class StickerManager {
 
         resizeHandle.addEventListener('mousedown', onResizeStart);
 
-        // --- Delete ---
         el.querySelector('.sticker-delete').onclick = (e) => {
             e.stopPropagation();
             this.remove(stickerObj.id);
         };
-        
-        // Cleanup listeners when element is removed? 
-        // Current simple implementation relies on garbage collection of closures or explicit removal if we cared more about memory leaks for long running sessions.
-        // For now, it's acceptable as the modal is short-lived.
     }
 }

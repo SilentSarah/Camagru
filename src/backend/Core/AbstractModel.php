@@ -125,7 +125,6 @@ abstract class AbstractModel
         $conditions = [];
 
         foreach ($criteria as $key => $value) {
-            // Handle logical operators (AND, OR, NOT)
             if (strtoupper($key) === 'OR' || strtoupper($key) === 'AND') {
                 $subConditions = [];
                 foreach ($value as $subCriteria) {
@@ -149,7 +148,6 @@ abstract class AbstractModel
                 continue;
             }
 
-            // Handle field operators
             if (is_array($value)) {
                 foreach ($value as $operator => $operand) {
                     switch ($operator) {
@@ -200,16 +198,10 @@ abstract class AbstractModel
                             $bindings[] = "%$operand";
                             break;
                         default:
-                            // Assume implicit equality if array key is not a recognized operator
-                            // This handles cases like 'age' => ['gt' => 18] where 'gt' is the operator
-                            // But what if the user passed 'field' => ['unknown' => 'val']?
-                            // For safety, we can default to equality or throw error.
-                            // Let's assume nested array implies operators.
                             break;
                     }
                 }
             } else {
-                // Implicit equality: 'key' => 'value'
                 $conditions[] = "$key = ?";
                 $bindings[] = $value;
             }
@@ -274,7 +266,6 @@ abstract class AbstractModel
         $cols = implode(", ", $keys);
         $vals = implode(", ", array_fill(0, count($keys), "?"));
 
-        // conflict clause
         $updates = implode(", ", array_map(fn($k) => "$k = VALUES($k)", $keys));
 
         $sql = "INSERT INTO {$this->table} ($cols)

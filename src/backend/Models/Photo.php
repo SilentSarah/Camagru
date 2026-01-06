@@ -29,14 +29,12 @@ class Photo extends AbstractModel
         $this->table = "photos";
     }
 
-    // Getters
     public function getId(): int { return $this->id; }
     public function getUserId(): int { return $this->user_id; }
     public function getFileName(): string { return $this->file_name; }
     public function getDescription(): ?string { return $this->description; }
     public function getCreatedAt(): ?DateTime { return $this->created_at; }
 
-    // Setters
     public function setId(int $id): void { $this->id = $id; }
     public function setUserId(int $user_id): void { $this->user_id = $user_id; }
     public function setFileName(string $file_name): void { $this->file_name = $file_name; }

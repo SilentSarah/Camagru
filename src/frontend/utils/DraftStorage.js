@@ -42,20 +42,17 @@ export const DraftStorage = {
                 ...draft
             };
             
-            // Keep only last 10 drafts
             const updatedDrafts = [newDraft, ...drafts].slice(0, 10);
             
             localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedDrafts));
             return newDraft;
         } catch (e) {
-            // Handle quota exceeded
             if (e.name === 'QuotaExceededError') {
-                // Try to remove oldest drafts
                 const drafts = DraftStorage.getDrafts();
                 if (drafts.length > 1) {
                     const smallerList = drafts.slice(0, Math.ceil(drafts.length / 2));
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(smallerList));
-                    return DraftStorage.saveDraft(draft); // Retry
+                    return DraftStorage.saveDraft(draft); 
                 }
             }
             return null;

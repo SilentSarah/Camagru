@@ -14,26 +14,27 @@
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
-class ModelParser {
-    
+class ModelParser
+{
+
     /**
      * Parse a model class and extract schema information
      * @param string $modelClass
      * @return array
      */
-    public function parseModel(string $modelClass): array {
+    public function parseModel(string $modelClass): array
+    {
         if (!class_exists($modelClass)) {
             throw new Exception("Model class $modelClass does not exist");
         }
 
         $reflection = new ReflectionClass($modelClass);
         $properties = $reflection->getProperties(ReflectionProperty::IS_PRIVATE);
-        
+
         $columns = [];
         foreach ($properties as $property) {
             $name = $property->getName();
-            
-            // Skip if property is 'table' or 'primaryKey' or 'instance'
+
             if (in_array($name, ['table', 'primaryKey', 'instance'])) {
                 continue;
             }
@@ -62,7 +63,8 @@ class ModelParser {
      * @param string $modelClass
      * @return string
      */
-    public function getTableName(string $modelClass): string {
+    public function getTableName(string $modelClass): string
+    {
         try {
             $instance = new $modelClass();
             $reflection = new ReflectionClass($instance);
@@ -70,7 +72,6 @@ class ModelParser {
             $tableProperty->setAccessible(true);
             return $tableProperty->getValue($instance);
         } catch (Exception $e) {
-            // Fallback to pluralized lowercase class name
             return strtolower($modelClass) . 's';
         }
     }
@@ -82,25 +83,21 @@ class ModelParser {
      * @param mixed $defaultValue
      * @return array
      */
-    private function phpTypeToSql(string $propertyName, ReflectionType $type, mixed $defaultValue = null): array {
+    private function phpTypeToSql(string $propertyName, ReflectionType $type, mixed $defaultValue = null): array
+    {
         $nullable = $type->allowsNull();
         $typeName = $type instanceof ReflectionNamedType ? $type->getName() : 'mixed';
 
         $sqlType = 'VARCHAR(255)';
         $extra = '';
 
-        // Primary key detection
         if ($propertyName === 'id') {
             $sqlType = 'INT';
             $extra = 'AUTO_INCREMENT PRIMARY KEY';
             $nullable = false;
-        }
-        // Datetime fields
-        else if (str_ends_with($propertyName, '_at') || str_ends_with($propertyName, '_time')) {
+        } else if (str_ends_with($propertyName, '_at') || str_ends_with($propertyName, '_time')) {
             $sqlType = 'DATETIME';
-        }
-        // Type-based mapping
-        else {
+        } else {
             switch ($typeName) {
                 case 'int':
                     $sqlType = 'INT';
@@ -112,7 +109,6 @@ class ModelParser {
                     $sqlType = 'BOOLEAN';
                     break;
                 case 'string':
-                    // Check if it's a long text field (content, description, message, etc.)
                     if (in_array($propertyName, ['content', 'description', 'message', 'body', 'text'])) {
                         $sqlType = 'TEXT';
                     } else {
@@ -137,10 +133,11 @@ class ModelParser {
      * @param string $modelsDir
      * @return array
      */
-    public function getAllModels(string $modelsDir): array {
+    public function getAllModels(string $modelsDir): array
+    {
         $models = [];
         $files = glob($modelsDir . '/*.php');
-        
+
         foreach ($files as $file) {
             $className = basename($file, '.php');
             require_once $file;
@@ -148,7 +145,7 @@ class ModelParser {
                 $models[] = $className;
             }
         }
-        
+
         return $models;
     }
 }

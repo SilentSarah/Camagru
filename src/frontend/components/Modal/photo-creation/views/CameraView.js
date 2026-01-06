@@ -20,7 +20,6 @@ export function createCameraView({ onCapture, onError }) {
     const video = container.querySelector('#camera-video');
     let mediaStream = null;
 
-    // Start Camera
     const startCamera = async () => {
         try {
             mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
@@ -31,7 +30,6 @@ export function createCameraView({ onCapture, onError }) {
         }
     };
     
-    // Stop Camera helper attached to the element
     container.stopCamera = () => {
         if (mediaStream) {
             mediaStream.getTracks().forEach(track => track.stop());
@@ -53,7 +51,6 @@ export function createCameraView({ onCapture, onError }) {
          onCapture(dataUrl);
     };
 
-    // Auto-start
     startCamera();
 
     return container;

@@ -15,7 +15,6 @@
 export default function Modal({ isOpen = true, onClose, title, children, className = '', hideCloseButton = false, externalClose = false }) {
     if (!isOpen) return document.createDocumentFragment();
 
-    // Prevent background scrolling
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
@@ -23,13 +22,11 @@ export default function Modal({ isOpen = true, onClose, title, children, classNa
     overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity opacity-0';
     overlay.id = 'modal-overlay';
 
-    // Container
     const container = document.createElement('div');
     container.className = `relative bg-insta rounded-xl shadow-2xl border border-gray-800 transform scale-95 transition-all duration-200 opacity-0 ${className}`;
     container.style.maxHeight = '90vh';
     container.style.maxWidth = '95vw';
     
-    // Header (if title exists)
     if (title) {
         const header = document.createElement('div');
         header.className = 'flex items-center justify-between p-4 border-b border-gray-800';
@@ -43,7 +40,6 @@ export default function Modal({ isOpen = true, onClose, title, children, classNa
         container.appendChild(header);
     }
 
-    // Content
     const content = document.createElement('div');
     content.className = title ? '' : 'relative'; 
     
@@ -57,7 +53,6 @@ export default function Modal({ isOpen = true, onClose, title, children, classNa
         });
     }
 
-    // Add close button if no title (floating close)
     if (!title && !hideCloseButton) {
         if (externalClose) {
             const extClose = document.createElement('button');
@@ -80,7 +75,6 @@ export default function Modal({ isOpen = true, onClose, title, children, classNa
     container.appendChild(content);
     overlay.appendChild(container);
 
-    // Animation Logic
     requestAnimationFrame(() => {
         overlay.classList.remove('opacity-0');
         container.classList.remove('scale-95', 'opacity-0');
@@ -99,7 +93,6 @@ export default function Modal({ isOpen = true, onClose, title, children, classNa
         }, 200);
     };
 
-    // Event Listeners
     overlay.onclick = (e) => {
         if (e.target === overlay) close();
     };

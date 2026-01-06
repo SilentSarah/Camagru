@@ -24,7 +24,6 @@ function getToastContainer() {
     if (!container) {
         container = document.createElement('div');
         container.id = ToastContainerId;
-        // Fixed position, z-index high, flex column for stacking
         container.className = 'fixed bottom-4 right-4 z-50 flex flex-col gap-2';
         document.body.appendChild(container);
     }
@@ -49,7 +48,7 @@ export function showToast(message, type = 'info', customIcon = null) {
             classes: 'border-red-400 bg-red-800 text-white',
             icon: 'fa-solid fa-circle-exclamation'
         },
-        fail: { // Alias for error
+        fail: {
             classes: 'border-red-400 bg-red-800 text-white',
             icon: 'fa-solid fa-circle-exclamation'
         },
@@ -67,12 +66,10 @@ export function showToast(message, type = 'info', customIcon = null) {
     
     const toast = document.createElement('div');
     
-    // Initial state for animation (translate off screen)
     toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border transform transition-all duration-300 translate-x-full opacity-0 ${preset.classes}`;
     
     let iconHtml = '';
     if (customIcon) {
-        // Simple heuristic: if it contains '/' or '.', treat as image URL. Otherwise class.
         if (customIcon.includes('/') || customIcon.includes('.')) {
              iconHtml = `<img src="${customIcon}" class="w-6 h-6 object-cover rounded-full" alt="icon">`;
         } else {
@@ -92,30 +89,21 @@ export function showToast(message, type = 'info', customIcon = null) {
         </button>
     `;
 
-    // Close button logic
     const closeBtn = toast.querySelector('button');
     closeBtn.onclick = () => removeToast(toast);
 
     container.appendChild(toast);
-
-    // Trigger animation
-    // Use setTimeout to ensure DOM update before changing classes
     requestAnimationFrame(() => {
-        // We need to remove translate-x-full and opacity-0
         toast.classList.remove('translate-x-full', 'opacity-0');
     });
-
-    // Auto remove after 3 seconds
     setTimeout(() => {
         removeToast(toast);
     }, 3000);
 }
 
 function removeToast(toast) {
-    // Slide out
     toast.classList.add('translate-x-full', 'opacity-0');
     
-    // Wait for transition to finish
     toast.addEventListener('transitionend', () => {
         toast.remove();
         const container = document.getElementById(ToastContainerId);

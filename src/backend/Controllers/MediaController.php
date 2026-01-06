@@ -109,7 +109,6 @@ class MediaController
 
         $photoModel = new Photo();
 
-        // First, try to get posts excluding current user
         $photos = [];
         if ($currentUserId) {
             $photos = $photoModel->findAllExcluding(
@@ -120,12 +119,10 @@ class MediaController
             );
         }
 
-        // If not enough posts from others, fill with current user's posts
         if (count($photos) < $limit) {
             $remaining = $limit - count($photos);
             $allPhotos = $photoModel->findAll([], ["id" => "DESC"], $remaining, $cursor + count($photos));
 
-            // Filter out duplicates and add remaining
             $existingIds = array_column($photos, 'id');
             foreach ($allPhotos as $photo) {
                 if (!in_array($photo['id'], $existingIds)) {

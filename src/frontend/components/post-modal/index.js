@@ -13,7 +13,6 @@
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
-// Export all post-modal components from a single entry point
 export { default as PostAuthorHeader } from './PostAuthorHeader.js';
 export { default as PostDescription } from './PostDescription.js';
 export { default as Comment } from './Comment.js';

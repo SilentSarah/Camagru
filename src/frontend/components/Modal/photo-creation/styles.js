@@ -6,7 +6,7 @@
 let styleElement = null;
 
 export const injectStyles = () => {
-    if (styleElement) return; // Already injected
+    if (styleElement) return;
 
     styleElement = document.createElement('style');
     styleElement.innerHTML = `
