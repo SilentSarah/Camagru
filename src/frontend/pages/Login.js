@@ -14,6 +14,7 @@
  */
 
 import { showToast } from '../components/Toast.js';
+import apiFetch from '../js/ApiClient.js';
 import FetchCSRF from '../js/Csrf.js';
 import { abortController } from '../js/Router.js';
 import { goTo } from '../js/Utils.js';
@@ -51,6 +52,7 @@ export default async function Login() {
                     </div>
                     <button
                         type="submit"
+                        id="login-btn"
                         class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full mb-3">Login
                     </button>
                 </form>
@@ -66,28 +68,38 @@ export default async function Login() {
 
 
     const form = div.querySelector('#login-form');
+    const submitBtn = div.querySelector('#login-btn');
     form.onsubmit = async (e) => {
+        if (submitBtn.disabled) return;
+        
         e.preventDefault();
+        submitBtn.disabled = true;
         const formData = new FormData(form);
-        const response = await fetch(`${window.env.APP_URL}index.php/login`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-                'X-CSRF-TOKEN': await FetchCSRF()
-            },
-            body: formData,
-            signal: abortController.signal
-        });
-        const result = await response.json();
-        if (response.status === 200) {
-            showToast("Login successful", "success");
-            goTo("/", 1);
-        } else {
-            if (result.code === "USER_NOT_VERIFIED") {
-                goTo("/verify", 1);
+        try {
+            const response = await apiFetch(`${window.env.APP_URL}index.php/login`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'X-CSRF-TOKEN': await FetchCSRF()
+                },
+                body: formData,
+                signal: abortController.signal
+            });
+            const result = await response.json();
+            if (response.status === 200) {
+                showToast("Login successful", "success");
+                goTo("/", 1);
             } else {
-                showToast(result.error, "error");
+                if (result.code === "USER_NOT_VERIFIED") {
+                    goTo("/verify", 1);
+                } else {
+                    showToast(result.error, "error");
+                }
+                submitBtn.disabled = false;
             }
+        } catch (error) {
+            showToast("An error occurred", "error");
+            submitBtn.disabled = false;
         }
     };
     return div;

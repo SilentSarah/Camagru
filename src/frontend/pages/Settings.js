@@ -4,22 +4,20 @@ import { showToast } from '../components/Toast.js';
 import { user } from '../js/Auth.js';
 import { getCookie, goTo } from '../js/Utils.js';
 import { abortController } from '../js/Router.js';
+import apiFetch from '../js/ApiClient.js';
 
 export default async function Settings() {
     const container = document.createElement('div');
     container.className = 'min-h-screen w-full bg-black text-white p-4 md:p-8 pb-24 md:pb-8 flex flex-col md:ml-16 overflow-y-auto';
 
-    // Main content wrapper
     const content = document.createElement('div');
     content.className = 'w-full max-w-2xl mx-auto';
     
-    // Title
     const title = document.createElement('h1');
     title.className = 'text-xl font-semibold mb-8';
     title.textContent = 'Edit profile';
     content.appendChild(title);
 
-    // Profile Photo Section
     const photoSection = document.createElement('div');
     photoSection.className = 'bg-[#262626] rounded-2xl p-5 mb-4 flex items-center justify-between';
     
@@ -55,31 +53,24 @@ export default async function Settings() {
     photoSection.appendChild(changePhotoBtn);
     content.appendChild(photoSection);
 
-    // Form
     const form = document.createElement('form');
     form.className = 'flex flex-col gap-4';
 
-    // Username
     const usernameGroup = createInputGroup('Username', 'text', 'username', user.username || '');
     form.appendChild(usernameGroup);
 
-    // Email
     const emailGroup = createInputGroup('Email', 'email', 'email', user.email || '');
     form.appendChild(emailGroup);
 
-    // Fullname
     const fullnameGroup = createInputGroup('Full Name', 'text', 'fullname', user.fullname || '');
     form.appendChild(fullnameGroup);
 
-    // Bio
     const bioGroup = createTextareaGroup('Bio', 'bio', user.bio || '', 'Write a short bio...');
     form.appendChild(bioGroup);
 
-    // Password
     const passwordGroup = createInputGroup('New Password', 'password', 'password', '', 'Leave blank to keep current');
     form.appendChild(passwordGroup);
 
-    // Email Notifications Toggle
     const notificationGroup = document.createElement('div');
     notificationGroup.className = 'flex items-center justify-between bg-[#262626] rounded-xl px-4 py-4';
     
@@ -100,7 +91,7 @@ export default async function Settings() {
     const toggleInput = document.createElement('input');
     toggleInput.type = 'checkbox';
     toggleInput.name = 'email_notifications';
-    toggleInput.checked = user.email_notifications !== false; // Default to true
+    toggleInput.checked = user.email_notifications !== false; 
     toggleInput.className = 'sr-only peer';
     
     const toggleSlider = document.createElement('div');
@@ -117,13 +108,11 @@ export default async function Settings() {
     notificationGroup.appendChild(toggleWrapper);
     form.appendChild(notificationGroup);
 
-    // Listen for toggle changes
     toggleInput.onchange = () => {
         saveBtn.disabled = false;
         saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
     };
 
-    // Hidden file input for profile picture
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.accept = 'image/*';
@@ -132,7 +121,6 @@ export default async function Settings() {
         const file = e.target.files[0];
         if (!file) return;
         
-        // Show loading state
         changePhotoBtn.disabled = true;
         changePhotoBtn.textContent = 'Uploading...';
         
@@ -143,7 +131,7 @@ export default async function Settings() {
             const csrfToken = await FetchCSRF();
             const token = getCookie('session_token');
             
-            const response = await fetch(`${window.env.APP_URL}index.php/upload-profile-picture`, {
+            const response = await apiFetch(`${window.env.APP_URL}index.php/upload-profile-picture`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -175,7 +163,6 @@ export default async function Settings() {
         fileInput.click();
     };
 
-    // Save Button
     const saveBtn = document.createElement('button');
     saveBtn.type = 'submit';
     saveBtn.textContent = 'Save Changes';
@@ -185,12 +172,10 @@ export default async function Settings() {
 
     content.appendChild(form);
 
-    // Divider
     const divider = document.createElement('hr');
     divider.className = 'my-8 border-gray-800';
     content.appendChild(divider);
 
-    // Delete Account Section
     const deleteSection = document.createElement('div');
     deleteSection.className = 'text-center';
     
@@ -203,7 +188,6 @@ export default async function Settings() {
     content.appendChild(deleteSection);
     container.appendChild(content);
 
-    // Event Listeners
     form.onsubmit = async (e) => {
         e.preventDefault();
         saveBtn.disabled = true;
@@ -213,10 +197,8 @@ export default async function Settings() {
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
             
-            // Remove empty password if not set
             if (!data.password) delete data.password;
             
-            // Handle checkbox - FormData only includes it if checked, so set explicitly
             data.email_notifications = toggleInput.checked ? 'true' : 'false';
 
             const csrfToken = await FetchCSRF();
@@ -224,7 +206,7 @@ export default async function Settings() {
 
             const token = getCookie('session_token');
             
-            const response = await fetch(`${window.env.APP_URL}index.php/update-account`, {
+            const response = await apiFetch(`${window.env.APP_URL}index.php/update-account`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -300,7 +282,7 @@ export default async function Settings() {
             const csrfToken = await FetchCSRF();
             const token = getCookie('session_token');
 
-            const response = await fetch(`${window.env.APP_URL}index.php/delete-account`, {
+            const response = await apiFetch(`${window.env.APP_URL}index.php/delete-account`, {
                 method: 'DELETE',
                 credentials: 'include',
                 headers: {

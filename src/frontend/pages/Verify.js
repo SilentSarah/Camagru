@@ -14,6 +14,7 @@
  */
 
 import { showToast } from '../components/Toast.js';
+import apiFetch from '../js/ApiClient.js';
 import FetchCSRF from '../js/Csrf.js';
 import { abortController } from '../js/Router.js';
 import { getCookie } from '../js/Utils.js';
@@ -42,7 +43,7 @@ export default async function Verify() {
             return;
         }
         const csrfToken = await FetchCSRF();
-        const response = await fetch(`${window.env.APP_URL}index.php/verify-account?token=${token}`, {
+        const response = await apiFetch(`${window.env.APP_URL}index.php/verify-account?token=${token}`, {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -108,14 +109,14 @@ export default async function Verify() {
                     const formData = new FormData();
                     formData.append('email', email);
 
-                    const response = await fetch(`${window.env.APP_URL}index.php/request-verification`, {
+                    const response = await apiFetch(`${window.env.APP_URL}index.php/request-verification`, {
                         method: 'POST',
                         credentials: 'include',
                         headers: {
                             'X-CSRF-TOKEN': await FetchCSRF()
                         },
                         body: formData,
-                       // signal: abortController.signal
+                        signal: abortController.signal
                     });
 
                     if (response.ok) {

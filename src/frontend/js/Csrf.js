@@ -14,6 +14,7 @@
  */
 
 import { showToast } from '../components/Toast.js';
+import apiFetch from './ApiClient.js';
 
 /**
  * Fetches the CSRF token from the server
@@ -21,7 +22,7 @@ import { showToast } from '../components/Toast.js';
  */
 export default async function FetchCSRF() {
     try {
-        const response = await fetch(`${window.env.APP_URL}index.php/csrf` , {
+        const response = await apiFetch(`${window.env.APP_URL}index.php/csrf` , {
             method: 'GET',
             credentials: 'include',
         });

@@ -16,9 +16,9 @@
 import FetchCSRF from '../js/Csrf.js';
 import { showToast } from '../components/Toast.js';
 import { abortController } from '../js/Router.js';
+import apiFetch from '../js/ApiClient.js';
 
 export default async function Register() {
-    let csrfToken = await FetchCSRF();
     let renderedResult = document.createElement('div');
     renderedResult.className = 'container mx-auto flex justify-center items-center min-h-screen text-white py-5 px-4';
 
@@ -95,16 +95,20 @@ export default async function Register() {
     `;
     
     const form = registerPage.querySelector('#register-form');
+    const submitBtn = registerPage.querySelector('#register-btn');
     form.onsubmit = async (e) => {
+        if (submitBtn.disabled) return;
+        
         e.preventDefault();
+        submitBtn.disabled = true;
         const formData = new FormData(form);
         renderedResult.replaceChild(loadingPage, registerPage);
         try {
-            const response = await fetch(`${window.env.APP_URL}index.php/register`, {
+            const response = await apiFetch(`${window.env.APP_URL}index.php/register`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
-                    'X-CSRF-TOKEN': csrfToken
+                    'X-CSRF-TOKEN': await FetchCSRF()
                 },
                 body: formData,
                 signal: abortController.signal
@@ -116,12 +120,12 @@ export default async function Register() {
                 const data = await response.json();
                 showToast(data.error, "error");
                 renderedResult.replaceChild(registerPage, loadingPage);
+                submitBtn.disabled = false;
             }
         } catch (error) {
             showToast("An error occurred, Please try again later", "error");
             renderedResult.replaceChild(registerPage, loadingPage);
-        } finally {
-            csrfToken = await FetchCSRF();
+            submitBtn.disabled = false;
         }
     };
 

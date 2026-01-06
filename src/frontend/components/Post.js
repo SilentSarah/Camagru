@@ -16,6 +16,7 @@
 import { getCookie, goTo } from '../js/Utils.js';
 import FetchCSRF from '../js/Csrf.js';
 import { showToast } from './Toast.js';
+import apiFetch from '../js/ApiClient.js';
 
 /**
  * Format relative time
@@ -105,7 +106,6 @@ export default function Post({ photo, onLikeUpdate }) {
         ` : ''}
     `;
 
-    // === Event Handlers ===
     const likeBtn = div.querySelector('.like-btn');
     const likesCountEl = div.querySelector('.likes-count');
     const imageContainer = div.querySelector('.post-image-container');
@@ -113,14 +113,12 @@ export default function Post({ photo, onLikeUpdate }) {
     const viewCommentsBtn = div.querySelector('.view-comments-btn');
     const shareBtn = div.querySelector('.share-btn');
 
-    // Navigate to post page
     const openPost = () => goTo(`/post?id=${photo.id}`);
 
-    // Like toggle
     const toggleLike = async () => {
         likeBtn.disabled = true;
+        likeBtn.classList.add('animate-pulse', 'opacity-50');
         
-        // Optimistic update
         isLiked = !isLiked;
         likesCount = isLiked ? likesCount + 1 : likesCount - 1;
         
@@ -130,7 +128,7 @@ export default function Post({ photo, onLikeUpdate }) {
         likesCountEl.textContent = `${likesCount.toLocaleString()} likes`;
 
         try {
-            const response = await fetch(`${window.env.APP_URL}index.php/toggle-like`, {
+            const response = await apiFetch(`${window.env.APP_URL}index.php/toggle-like`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -145,7 +143,6 @@ export default function Post({ photo, onLikeUpdate }) {
             
             if (onLikeUpdate) onLikeUpdate(photo.id, isLiked, likesCount);
         } catch (error) {
-            // Revert on failure
             isLiked = !isLiked;
             likesCount = isLiked ? likesCount + 1 : likesCount - 1;
             likeBtn.innerHTML = `<i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart text-2xl"></i>`;
@@ -155,10 +152,10 @@ export default function Post({ photo, onLikeUpdate }) {
             showToast('Failed to update like', 'error');
         } finally {
             likeBtn.disabled = false;
+            likeBtn.classList.remove('animate-pulse', 'opacity-50');
         }
     };
 
-    // Click to open post, double-click to like
     let lastClick = 0;
     let clickTimeout = null;
     imageContainer.onclick = (e) => {

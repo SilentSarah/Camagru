@@ -21,12 +21,12 @@ import FetchCSRF from '../js/Csrf.js';
 import { getCookie, goTo } from '../js/Utils.js';
 import { openConfirmationModal } from '../components/Modal/ConfirmationModal.js';
 import { abortController } from '../js/Router.js';
+import apiFetch from '../js/ApiClient.js';
 
 export default async function PostPage() {
     const container = document.createElement('div');
     container.className = 'min-h-screen w-full bg-black text-white flex items-center justify-center p-4 md:p-8 md:ml-16 pb-20 md:pb-0';
 
-    // Get post ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get('id');
 
@@ -44,7 +44,6 @@ export default async function PostPage() {
         return container;
     }
 
-    // Show loading state
     container.innerHTML = `
         <div class="flex items-center justify-center">
             <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -53,7 +52,7 @@ export default async function PostPage() {
 
     try {
         const session_token = getCookie('session_token');
-        const response = await fetch(`${window.env.APP_URL}index.php/photo?id=${postId}`, {
+        const response = await apiFetch(`${window.env.APP_URL}index.php/photo?id=${postId}`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -73,8 +72,7 @@ export default async function PostPage() {
             throw new Error('Post not found');
         }
 
-        // Fetch image
-        const imageRes = await fetch(`${window.env.APP_URL}index.php/uploads?image=${photo.file_name}`, {
+        const imageRes = await apiFetch(`${window.env.APP_URL}index.php/uploads?image=${photo.file_name}`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -98,7 +96,6 @@ export default async function PostPage() {
         const likes = photo.likes || 0;
         const comments = photo.comments || [];
 
-        // Generate share links
         const shareLinks = generateShareLinks({
             postId: photo.id,
             userId: photo.user_id,
@@ -106,27 +103,22 @@ export default async function PostPage() {
             imagePath: imageUrl
         });
 
-        // Build page content
         container.innerHTML = '';
         container.className = 'min-h-screen w-full bg-black text-white flex flex-col lg:flex-row items-center justify-center p-0 md:ml-16 pb-16 md:pb-0';
 
-        // Create post container
         const postContainer = document.createElement('div');
         postContainer.className = 'w-full max-w-6xl bg-neutral-900 flex flex-col lg:flex-row lg:h-[85vh] overflow-hidden rounded-none lg:rounded-xl';
 
-        // LEFT: Image Section
         const imgSection = document.createElement('div');
         imgSection.className = 'w-full lg:w-[60%] h-[40vh] lg:h-full bg-black flex items-center justify-center relative overflow-hidden';
         imgSection.innerHTML = PostImage({ imagePath: imageUrl, username: user?.username });
 
-        // Back button
         const backBtn = document.createElement('button');
         backBtn.className = 'absolute top-4 left-4 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors z-10';
         backBtn.innerHTML = '<i class="fa-solid fa-arrow-left text-white"></i>';
         backBtn.onclick = () => history.back();
         imgSection.appendChild(backBtn);
 
-        // RIGHT: Details Section
         const isAuthor = currentUser?.id === photo.user_id;
         
         const detailsSection = document.createElement('div');
@@ -203,7 +195,7 @@ export default async function PostPage() {
                 }
 
                 try {
-                    const response = await fetch(`${window.env.APP_URL}/toggle-like`, {
+                    const response = await apiFetch(`${window.env.APP_URL}/toggle-like`, {
                         method: 'POST',
                         credentials: 'include',
                         headers: {
@@ -231,7 +223,6 @@ export default async function PostPage() {
             };
         }
 
-        // Emoji Handler
         const emojiBtn = container.querySelector('#emoji-btn');
         const emojiPopover = container.querySelector('#emoji-popover');
         const commentInput = container.querySelector('#comment-input');
@@ -270,7 +261,6 @@ export default async function PostPage() {
             });
         }
 
-        // Comment Input Handler
         if (commentInput && postCommentBtn) {
             commentInput.oninput = () => {
                 const isEmpty = commentInput.value.trim().length === 0;
@@ -295,7 +285,7 @@ export default async function PostPage() {
             postCommentBtn.textContent = 'Posting...';
 
             try {
-                const response = await fetch(`${window.env.APP_URL}create-comment`, {
+                const response = await apiFetch(`${window.env.APP_URL}create-comment`, {
                     method: 'POST',
                     credentials: 'include',
                     headers: {
@@ -363,14 +353,13 @@ export default async function PostPage() {
             };
         }
 
-        // Delete Comment
         const deleteComment = (commentId) => {
             openConfirmationModal({
                 message: 'Are you sure you want to delete this comment?',
                 confirmText: 'Delete',
                 onConfirm: async () => {
                     try {
-                        const response = await fetch(`${window.env.APP_URL}delete-comment?id=${commentId}`, {
+                        const response = await apiFetch(`${window.env.APP_URL}delete-comment?id=${commentId}`, {
                             method: 'DELETE',
                             credentials: 'include',
                             headers: {
@@ -393,7 +382,6 @@ export default async function PostPage() {
             });
         };
 
-        // Share Toggle
         const shareBtn = container.querySelector('#share-btn');
         const shareDropdown = container.querySelector('#share-dropdown');
         const copyLinkBtn = container.querySelector('#copy-link-btn');
@@ -423,7 +411,6 @@ export default async function PostPage() {
             };
         }
 
-        // Delete Post (author only)
         if (isAuthor) {
             const optionsBtn = container.querySelector('#post-options-btn');
             const optionsDropdown = container.querySelector('#post-options-dropdown');
@@ -449,7 +436,7 @@ export default async function PostPage() {
                         confirmText: 'Delete',
                         onConfirm: async () => {
                             try {
-                                const response = await fetch(`${window.env.APP_URL}delete-post?id=${photo.id}`, {
+                                const response = await apiFetch(`${window.env.APP_URL}delete-post?id=${photo.id}`, {
                                     method: 'DELETE',
                                     credentials: 'include',
                                     headers: {
@@ -474,7 +461,6 @@ export default async function PostPage() {
             }
         }
 
-        // Comment Delete Delegation
         if (commentsListEl) {
             commentsListEl.addEventListener('click', (e) => {
                 const deleteBtnEl = e.target.closest('.comment-delete-btn');

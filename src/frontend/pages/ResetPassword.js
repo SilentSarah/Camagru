@@ -17,6 +17,7 @@ import FetchCSRF from '../js/Csrf.js';
 import { showToast } from '../components/Toast.js';
 import { goTo } from '../js/Utils.js';
 import { abortController } from '../js/Router.js';
+import apiFetch from '../js/ApiClient.js';
 
 export default async function ResetPassword() {
     const div = document.createElement('div');
@@ -39,7 +40,7 @@ export default async function ResetPassword() {
     `;
 
     try {
-        const response = await fetch(`${window.env.APP_URL}index.php/reset-password?token=${token}`, {
+        const response = await apiFetch(`${window.env.APP_URL}index.php/reset-password?token=${token}`, {
             method: 'GET',
             credentials: 'include',
             signal: abortController.signal
@@ -127,7 +128,7 @@ function renderForm(container, token) {
 
         try {
             const csrfToken = await FetchCSRF();
-            const response = await fetch(`${window.env.APP_URL}index.php/reset-password?token=${token}`, {
+            const response = await apiFetch(`${window.env.APP_URL}index.php/reset-password?token=${token}`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {

@@ -13,6 +13,7 @@
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
+import apiFetch from '../js/ApiClient.js';
 import { abortController } from '../js/Router.js';
 import { getCookie, goTo } from '../js/Utils.js';
 
@@ -25,7 +26,6 @@ export function openSearchModal() {
         return;
     }
     
-    // Create overlay for mobile
     const overlay = document.createElement('div');
     overlay.id = 'search-overlay';
     overlay.className = 'fixed inset-0 bg-black/60 z-40 md:hidden opacity-0 transition-opacity duration-300';
@@ -82,26 +82,20 @@ export function openSearchModal() {
     document.body.appendChild(overlay);
     document.body.appendChild(searchDrawer);
     
-    // Trigger animation
     requestAnimationFrame(() => {
         overlay.classList.remove('opacity-0');
         overlay.classList.add('opacity-100');
-        // Mobile: slide up, Desktop: slide right
         searchDrawer.classList.remove('translate-y-full', 'md:-translate-x-full');
         searchDrawer.classList.add('translate-y-0', 'md:translate-x-0');
     });
     
-    // Focus input
     const input = searchDrawer.querySelector('#search-input');
     setTimeout(() => input.focus(), 300);
     
-    // Close button
     searchDrawer.querySelector('#close-search').onclick = closeSearchModal;
     
-    // Click overlay to close
     overlay.onclick = closeSearchModal;
     
-    // Escape key to close
     escHandler = (e) => {
         if (e.key === 'Escape') {
             closeSearchModal();
@@ -109,14 +103,12 @@ export function openSearchModal() {
     };
     document.addEventListener('keydown', escHandler);
     
-    // Search handler with debounce
     let debounceTimer;
     input.oninput = () => {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => searchUsers(input.value), 300);
     };
     
-    // Touch drag to close (mobile only)
     const dragHandle = searchDrawer.querySelector('.md\\:hidden');
     if (dragHandle) {
         let startY = 0;
@@ -134,7 +126,6 @@ export function openSearchModal() {
             currentY = e.touches[0].clientY;
             const deltaY = currentY - startY;
             
-            // Only allow dragging down
             if (deltaY > 0) {
                 searchDrawer.style.transform = `translateY(${deltaY}px)`;
             }
@@ -147,11 +138,9 @@ export function openSearchModal() {
             
             const deltaY = currentY - startY;
             
-            // If dragged more than 100px down, close the drawer
             if (deltaY > 100) {
                 closeSearchModal();
             } else {
-                // Snap back
                 searchDrawer.style.transform = '';
             }
         };
@@ -167,9 +156,8 @@ function closeSearchModal() {
     
     const overlay = document.getElementById('search-overlay');
     const drawerRef = searchDrawer;
-    searchDrawer = null; // Clear reference immediately to prevent double-close
+    searchDrawer = null;
     
-    // Animate out
     if (overlay) {
         overlay.classList.remove('opacity-100');
         overlay.classList.add('opacity-0');
@@ -177,7 +165,6 @@ function closeSearchModal() {
     drawerRef.classList.remove('translate-y-0', 'md:translate-x-0');
     drawerRef.classList.add('translate-y-full', 'md:-translate-x-full');
     
-    // Remove after animation
     setTimeout(() => {
         if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
         if (drawerRef && drawerRef.parentNode) drawerRef.parentNode.removeChild(drawerRef);
@@ -202,7 +189,6 @@ async function searchUsers(query) {
         return;
     }
     
-    // Show loading
     resultsContainer.innerHTML = `
         <div class="text-center text-gray-500 py-8">
             <i class="fa-solid fa-spinner animate-spin text-2xl"></i>
@@ -211,7 +197,7 @@ async function searchUsers(query) {
     
     try {
         const token = getCookie('session_token');
-        const response = await fetch(`${window.env.APP_URL}index.php/search-users?q=${encodeURIComponent(query)}`, {
+        const response = await apiFetch(`${window.env.APP_URL}index.php/search-users?q=${encodeURIComponent(query)}`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -235,7 +221,6 @@ async function searchUsers(query) {
                 </a>
             `).join('');
             
-            // Add click handlers
             resultsContainer.querySelectorAll('.user-result').forEach(el => {
                 el.onclick = (e) => {
                     e.preventDefault();

@@ -16,6 +16,7 @@
 import getCsrfToken from '../js/Csrf.js';
 import { showToast } from '../components/Toast.js';
 import { abortController } from '../js/Router.js';
+import apiFetch from '../js/ApiClient.js';
 
 export default async function PasswordRecovery() {
     const div = document.createElement('div');
@@ -72,7 +73,7 @@ export default async function PasswordRecovery() {
 
         try {
             const csrfToken = await getCsrfToken();
-            const response = await fetch(`${window.env.APP_URL}index.php/password-recovery`, {
+            const response = await apiFetch(`${window.env.APP_URL}index.php/password-recovery`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {

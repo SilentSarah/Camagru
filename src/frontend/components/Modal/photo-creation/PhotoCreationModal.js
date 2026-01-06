@@ -15,8 +15,8 @@ import { getCookie } from '../../../js/Utils.js'
 import FetchCSRF from '../../../js/Csrf.js';
 import { PhotoCompositor } from '../../../utils/PhotoCompositor.js';
 import { abortController } from '../../../js/Router.js';
+import apiFetch from '../../../js/ApiClient.js';
 
-// In-memory recents array
 const recents = [];
 
 export default function PhotoCreationModal({ onClose, onPost }) {
@@ -27,7 +27,6 @@ export default function PhotoCreationModal({ onClose, onPost }) {
         hasModification: false
     };
 
-    // Track last state for back navigation
     let lastEditState = {
         mode: 'camera',
         imageUrl: null,
@@ -35,7 +34,6 @@ export default function PhotoCreationModal({ onClose, onPost }) {
         stickers: []
     };
 
-    // --- Container Setup ---
     injectStyles();
 
     const contentContainer = document.createElement('div');
@@ -43,7 +41,6 @@ export default function PhotoCreationModal({ onClose, onPost }) {
     contentContainer.style.width = 'min(90vw, 500px)';
     contentContainer.style.height = 'min(80vh, 550px)';
     
-    // Header
     const header = document.createElement('div');
     header.className = 'flex items-center justify-between h-[44px] px-4 border-b border-neutral-800 shrink-0';
     header.innerHTML = `
@@ -62,11 +59,9 @@ export default function PhotoCreationModal({ onClose, onPost }) {
     main.className = 'flex-1 relative overflow-hidden bg-neutral-900 flex flex-col';
     contentContainer.appendChild(main);
 
-    // --- Modal Wrapper ---
     const modal = Modal({
         isOpen: true,
         onClose: () => {
-             // Cleanup
              if (main.stopCamera) main.stopCamera();
              removeStyles();
              if (onClose) onClose();
@@ -81,13 +76,11 @@ export default function PhotoCreationModal({ onClose, onPost }) {
         if (overlay) overlay.click(); 
     };
 
-    // --- Header Logic ---
     const updateHeader = (title, showBack) => {
         header.querySelector('#modal-title').textContent = title;
         const backBtn = header.querySelector('#modal-back-btn');
         const cancelBtn = header.querySelector('#modal-cancel-btn');
         
-        // Clear right placeholder (removes Share button etc from previous views)
         const rightPlaceholder = header.querySelector('#header-right-placeholder');
         rightPlaceholder.innerHTML = ''; 
 
@@ -116,10 +109,7 @@ export default function PhotoCreationModal({ onClose, onPost }) {
         }
     };
 
-    // --- Views renderers ---
-
     const setMainContent = (view) => {
-        // Cleanup previous camera if exists
         if (main.stopCamera) {
             main.stopCamera();
             main.stopCamera = null;
@@ -144,7 +134,6 @@ export default function PhotoCreationModal({ onClose, onPost }) {
                 const reader = new FileReader();
                 reader.onload = async (e) => {
                     let url = e.target.result;
-                    // Only resize if NOT a GIF to preserve animation
                     if (file.type !== 'image/gif') {
                         url = await PhotoCompositor.resizeImage(url);
                     }
@@ -156,7 +145,6 @@ export default function PhotoCreationModal({ onClose, onPost }) {
             onRecents: () => renderRecents(),
         });
 
-        // Handler for clicking a recent item from selection screen
         view.setOnSelectRecent(async (recent) => {
             let url = recent.imageUrl;
             if (!url.startsWith('data:image/gif')) {
@@ -210,7 +198,6 @@ export default function PhotoCreationModal({ onClose, onPost }) {
             initialFilter,
             initialStickers,
             onCapture: async (dataUrl, state) => {
-                // Save state for back navigation
                 lastEditState = {
                     mode: editorMode,
                     imageUrl: editorMode === 'image' ? imageUrl : dataUrl,
@@ -220,7 +207,6 @@ export default function PhotoCreationModal({ onClose, onPost }) {
                 
                 editorState = state;
 
-                // Save as draft
                 DraftStorage.saveDraft({
                     thumbnail: dataUrl,
                     imageUrl: editorMode === 'image' ? imageUrl : dataUrl,
@@ -228,7 +214,6 @@ export default function PhotoCreationModal({ onClose, onPost }) {
                     stickers: state.stickers.map(s => ({...s, element: undefined}))
                 });
 
-                // If editing from a draft, delete the old one
                 if (fromDraftId) {
                     DraftStorage.deleteDraft(fromDraftId);
                 }
@@ -244,7 +229,6 @@ export default function PhotoCreationModal({ onClose, onPost }) {
             }
         });
         
-        // Expose stopCamera for cleanup
         main.stopCamera = view.stopCamera;
         
         setMainContent(view);
@@ -257,7 +241,6 @@ export default function PhotoCreationModal({ onClose, onPost }) {
 
         const view = createShareView({ imageDataUrl: finalImageUrl });
 
-        // Add Share button to header
         const rightPlaceholder = header.querySelector('#header-right-placeholder');
         rightPlaceholder.innerHTML = `
             <button id="share-btn" class="text-blue-500 font-semibold text-sm hover:text-white transition-colors">Share</button>
@@ -271,7 +254,7 @@ export default function PhotoCreationModal({ onClose, onPost }) {
             btn.disabled = true;
 
             try {
-                const blob = await fetch(finalImageUrl).then(r => r.blob());
+                const blob = await apiFetch(finalImageUrl).then(r => r.blob());
                 const formData = new FormData();
                 const extension = finalImageUrl.split(";").shift().split("/").pop();
                 formData.append('image', blob, `post-${Date.now()}.${extension}`);
@@ -280,7 +263,7 @@ export default function PhotoCreationModal({ onClose, onPost }) {
                 const jwtToken = getCookie('session_token');
                 const csrfToken = await FetchCSRF();
 
-                const response = await fetch(`${window.env.APP_URL}upload-post`, {
+                const response = await apiFetch(`${window.env.APP_URL}upload-post`, {
                     method: 'POST',
                     body: formData,
                     credentials: 'include',
@@ -306,7 +289,6 @@ export default function PhotoCreationModal({ onClose, onPost }) {
         setMainContent(view);
     };
 
-    // Initialize
     renderSelection();
 
     return modal;

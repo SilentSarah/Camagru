@@ -19,6 +19,7 @@ import ProfileContent, { renderPhotoCard } from "../components/ProfileContent.js
 import { showToast } from "../components/Toast.js";
 import { getCookie } from "../js/Utils.js";
 import { abortController } from "../js/Router.js";
+import apiFetch from "../js/ApiClient.js";
 
 export default async function Profile() {
     let photos = [];
@@ -38,7 +39,7 @@ export default async function Profile() {
     
     if (userId && parseInt(userId) !== user.id) {
         try {
-            const userRes = await fetch(`${window.env.APP_URL}index.php/user-profile?user_id=${userId}`, {
+            const userRes = await apiFetch(`${window.env.APP_URL}index.php/user-profile?user_id=${userId}`, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {
@@ -70,7 +71,7 @@ export default async function Profile() {
         isLoading = true;
         
         try {
-            const res = await fetch(`${window.env.APP_URL}index.php/photos?user_id=${profileUser.id}&limit=${window.env.PHOTOS_PER_PAGE}&cursor=${cursor}`, {
+            const res = await apiFetch(`${window.env.APP_URL}index.php/photos?user_id=${profileUser.id}&limit=${window.env.PHOTOS_PER_PAGE}&cursor=${cursor}`, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {

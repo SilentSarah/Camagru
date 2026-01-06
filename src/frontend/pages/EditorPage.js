@@ -18,6 +18,7 @@ import { getCookie, goTo } from '../js/Utils.js';
 import { showToast } from '../components/Toast.js';
 import FetchCSRF from '../js/Csrf.js';
 import { abortController } from '../js/Router.js';
+import apiFetch from '../js/ApiClient.js';
 
 // Predefined filters
 const FILTERS = [
@@ -320,7 +321,6 @@ export default async function EditorPage() {
         </div>
     `;
 
-    // Attach event listeners
     attachEventListeners(container);
     
     return container;
@@ -331,18 +331,16 @@ export default async function EditorPage() {
  * @param {HTMLElement} container 
  */
 function attachEventListeners(container) {
-    // State
-    let currentMode = 'camera'; // 'camera' | 'image'
+    let currentMode = 'camera';
     let currentFilter = 'none';
     let mediaStream = null;
     let compositor = null;
     let customStickers = [];
     let appliedStickers = [];
-    let hasModifications = false; // Track if user has made any modifications
-    let pendingImageUrl = null;   // Image URL for sharing (with filters/stickers baked)
-    let pendingRawImageUrl = null; // Raw image URL for backend processing
+    let hasModifications = false; 
+    let pendingImageUrl = null;   
+    let pendingRawImageUrl = null; 
 
-    // Elements
     const cameraVideo = container.querySelector('#camera-video');
     const canvasContainer = container.querySelector('#canvas-container');
     const editorCanvas = container.querySelector('#editor-canvas');
@@ -365,7 +363,6 @@ function attachEventListeners(container) {
     const panelDraftsMobile = container.querySelector('#panel-drafts-mobile');
     const draftsContainerMobile = container.querySelector('#drafts-container-mobile');
     
-    // Share view elements
     const shareView = container.querySelector('#share-view');
     const btnBackEditor = container.querySelector('#btn-back-editor');
     const btnPost = container.querySelector('#btn-post');
@@ -373,29 +370,22 @@ function attachEventListeners(container) {
     const captionInput = container.querySelector('#caption-input');
     const captionCount = container.querySelector('#caption-count');
 
-    // Initialize PhotoCompositor
     compositor = new PhotoCompositor(editorCanvas);
     
-    // --- Update Next button state ---
-    let hasImageLoaded = false; // Track if an image is loaded in image mode
+    let hasImageLoaded = false; 
     
     const updateNextButtonState = () => {
-        // Enable Next button if there are modifications (stickers or filter applied)
         const hasFilterChange = currentFilter !== 'none';
         const hasStickers = appliedStickers.length > 0;
         hasModifications = hasFilterChange || hasStickers;
         
         if (currentMode === 'camera') {
-            // In camera mode, require filter or sticker before proceeding
             btnNext.disabled = !hasModifications;
         } else {
-            // In image mode, enable if image is loaded OR if modifications exist
-            // This allows sharing loaded drafts that already have effects baked in
             btnNext.disabled = !(hasImageLoaded || hasModifications);
         }
     };
 
-    // --- Mode Switching ---
     const showCameraMode = async () => {
         currentMode = 'camera';
         cameraVideo.classList.remove('hidden');
@@ -412,7 +402,7 @@ function attachEventListeners(container) {
         
         clearStickers();
         currentFilter = 'none';
-        hasImageLoaded = false; // Reset when switching to camera
+        hasImageLoaded = false; 
         await startCamera();
         updateFilterPreviews(null);
         updateNextButtonState();
@@ -420,7 +410,7 @@ function attachEventListeners(container) {
 
     const showImageMode = async (imageUrl, filter = 'none', stickers = []) => {
         currentMode = 'image';
-        hasImageLoaded = true; // Image is now loaded
+        hasImageLoaded = true; 
         cameraVideo.classList.add('hidden');
         canvasContainer.classList.remove('hidden');
         canvasContainer.classList.add('flex');
@@ -453,7 +443,6 @@ function attachEventListeners(container) {
         updateNextButtonState();
     };
 
-    // --- Camera Functions ---
     const startCamera = async () => {
         try {
             mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -464,7 +453,6 @@ function attachEventListeners(container) {
             cameraVideo.style.filter = currentFilter === 'none' ? '' : currentFilter;
             stickerLayer.style.filter = currentFilter === 'none' ? '' : currentFilter;
             
-            // Update sticker layer position once video dimensions are known
             cameraVideo.onloadedmetadata = () => {
                 updateStickerLayerPosition();
             };
@@ -482,7 +470,6 @@ function attachEventListeners(container) {
         }
     };
 
-    // --- Filter Logic ---
     const updateFilterPreviews = (imageUrl) => {
         const filterBtns = container.querySelectorAll('.filter-btn');
         filterBtns.forEach(btn => {
@@ -532,7 +519,6 @@ function attachEventListeners(container) {
         updateNextButtonState();
     };
 
-    // --- Sticker Functions ---
     const clearStickers = () => {
         stickerLayer.innerHTML = '';
         appliedStickers = [];
@@ -586,7 +572,6 @@ function attachEventListeners(container) {
             el.style.transform = `translate(-50%, -50%) scale(${stickerObj.scale})`;
         };
 
-        // Helper to get position from mouse or touch event
         const getEventPos = (e) => {
             if (e.touches && e.touches.length > 0) {
                 return { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -594,7 +579,6 @@ function attachEventListeners(container) {
             return { x: e.clientX, y: e.clientY };
         };
 
-        // --- Drag functionality ---
         const startDrag = (e) => {
             if (e.target.closest('.sticker-resize') || e.target.closest('.sticker-delete')) return;
             isDragging = true;
@@ -638,17 +622,14 @@ function attachEventListeners(container) {
             }
         };
 
-        // Mouse events
         el.onmousedown = startDrag;
         document.addEventListener('mousemove', onGlobalMove);
         document.addEventListener('mouseup', onGlobalUp);
         
-        // Touch events
         el.addEventListener('touchstart', startDrag, { passive: false });
         document.addEventListener('touchmove', onGlobalMove, { passive: true });
         document.addEventListener('touchend', onGlobalUp);
 
-        // --- Resize functionality ---
         const resizeHandle = el.querySelector('.sticker-resize');
         let isResizing = false;
         let resizeStartX = 0;
@@ -683,7 +664,6 @@ function attachEventListeners(container) {
         document.addEventListener('mouseup', onResizeUp);
         document.addEventListener('touchend', onResizeUp);
 
-        // Delete
         el.querySelector('.sticker-delete').onclick = (e) => {
             e.stopPropagation();
             el.remove();
@@ -702,20 +682,17 @@ function attachEventListeners(container) {
             stickerLayer.style.width = `${canvasRect.width}px`;
             stickerLayer.style.height = `${canvasRect.height}px`;
         } else if (currentMode === 'camera' && cameraVideo.videoWidth && cameraVideo.videoHeight) {
-            // Calculate the actual display area of the video (accounting for object-contain)
             const videoRatio = cameraVideo.videoWidth / cameraVideo.videoHeight;
             const wrapperRatio = wrapperRect.width / wrapperRect.height;
             
             let displayWidth, displayHeight, offsetX, offsetY;
             
             if (videoRatio > wrapperRatio) {
-                // Video is wider - letterboxing on top/bottom
                 displayWidth = wrapperRect.width;
                 displayHeight = displayWidth / videoRatio;
                 offsetX = 0;
                 offsetY = (wrapperRect.height - displayHeight) / 2;
             } else {
-                // Video is taller - letterboxing on left/right
                 displayHeight = wrapperRect.height;
                 displayWidth = displayHeight * videoRatio;
                 offsetX = (wrapperRect.width - displayWidth) / 2;
@@ -727,7 +704,6 @@ function attachEventListeners(container) {
             stickerLayer.style.width = `${displayWidth}px`;
             stickerLayer.style.height = `${displayHeight}px`;
         } else {
-            // Reset to full wrapper
             stickerLayer.style.left = '0';
             stickerLayer.style.top = '0';
             stickerLayer.style.width = '100%';
@@ -754,18 +730,15 @@ function attachEventListeners(container) {
         };
     };
 
-    // --- Tab Logic ---
     const switchTab = (tab) => {
         const activeClass = 'flex-1 py-3 md:py-4 text-xs md:text-sm font-semibold text-white border-b-2 border-white transition-colors';
         const inactiveClass = 'flex-1 py-3 md:py-4 text-xs md:text-sm font-semibold text-neutral-400 hover:text-neutral-200 transition-colors';
         const inactiveMobileClass = 'flex-1 py-3 md:py-4 text-xs md:text-sm font-semibold text-neutral-400 hover:text-neutral-200 transition-colors md:hidden';
         
-        // Reset all tabs
         tabFilters.className = inactiveClass;
         tabStickers.className = inactiveClass;
         if (tabDraftsMobile) tabDraftsMobile.className = inactiveMobileClass;
         
-        // Hide all panels
         panelFilters.classList.add('hidden');
         panelStickers.classList.add('hidden');
         if (panelDraftsMobile) panelDraftsMobile.classList.add('hidden');
@@ -782,7 +755,6 @@ function attachEventListeners(container) {
         }
     };
 
-    // --- Capture/Save Logic ---
     const captureOrSave = async () => {
         let dataUrl;
         
@@ -799,7 +771,6 @@ function attachEventListeners(container) {
             
             dataUrl = tempCanvas.toDataURL('image/png');
         } else {
-            // Calculate scale multiplier: actual canvas size vs visual display size
             const visualWidth = stickerLayer.offsetWidth || editorCanvas.offsetWidth || editorCanvas.width;
             const scaleMultiplier = editorCanvas.width / visualWidth;
             
@@ -808,13 +779,11 @@ function attachEventListeners(container) {
                 imageUrl: s.imageUrl,
                 x: s.x,
                 y: s.y,
-                // Apply scaleMultiplier to make sticker proportionally sized on actual canvas
                 scale: (s.scale || 1) * scaleMultiplier
             })));
             dataUrl = compositor.export();
         }
         
-        // Generate smaller thumbnail for localStorage efficiency
         const generateThumbnail = (sourceUrl, maxSize = 160) => {
             return new Promise((resolve) => {
                 const img = new Image();
@@ -825,7 +794,6 @@ function attachEventListeners(container) {
                     canvas.height = img.height * ratio;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    // Use JPEG with lower quality for smaller file size
                     resolve(canvas.toDataURL('image/jpeg', 0.6));
                 };
                 img.onerror = () => resolve(sourceUrl);
@@ -833,13 +801,11 @@ function attachEventListeners(container) {
             });
         };
         
-        // Compress full image for storage (use JPEG)
         const compressImage = (sourceUrl) => {
             return new Promise((resolve) => {
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    // Limit to max 800px for drafts
                     const maxSize = 800;
                     const ratio = Math.min(1, maxSize / Math.max(img.width, img.height));
                     canvas.width = img.width * ratio;
@@ -856,13 +822,11 @@ function attachEventListeners(container) {
         const thumbnail = await generateThumbnail(dataUrl);
         const compressedImage = await compressImage(dataUrl);
         
-        // IMPORTANT: Don't store stickers in draft - they're already baked into the image
-        // Storing them would cause double stickers when loading the draft
         DraftStorage.saveDraft({
             thumbnail: thumbnail,
             imageUrl: compressedImage,
-            filter: 'none', // Filter is already applied to the baked image
-            stickers: []    // Stickers are already baked into the image
+            filter: 'none', 
+            stickers: []    
         });
         
         refreshDrafts();
@@ -873,16 +837,12 @@ function attachEventListeners(container) {
     const bakeStickersToContext = async (ctx, canvasWidth, canvasHeight) => {
         ctx.filter = currentFilter === 'none' ? 'none' : currentFilter;
         
-        // The sticker layer shows stickers at visual display size
-        // But we're baking to actual image dimensions
-        // Need to scale sticker size proportionally: (128 visual px) * (actualWidth / visualWidth)
         const visualWidth = stickerLayer.offsetWidth || cameraVideo.offsetWidth || canvasWidth;
         const visualHeight = stickerLayer.offsetHeight || cameraVideo.offsetHeight || canvasHeight;
         const scaleMultiplierX = canvasWidth / visualWidth;
         const scaleMultiplierY = canvasHeight / visualHeight;
         
         for (const sticker of appliedStickers) {
-            // Apply position multipliers to account for potential aspect ratio differences
             const x = sticker.x * canvasWidth;
             const y = sticker.y * canvasHeight;
             const scale = sticker.scale || 1;
@@ -895,8 +855,6 @@ function attachEventListeners(container) {
                     const img = new Image();
                     img.crossOrigin = 'anonymous';
                     img.onload = () => {
-                        // Scale 128px base to match proportionally on actual canvas
-                        // Use average of X and Y multipliers for more accurate sizing
                         const avgMultiplier = (scaleMultiplierX + scaleMultiplierY) / 2;
                         const baseWidth = 128 * scale * avgMultiplier;
                         const aspectRatio = img.naturalHeight / img.naturalWidth;
@@ -947,7 +905,6 @@ function attachEventListeners(container) {
     };
 
     const attachDraftClickHandlers = () => {
-        // Attach to both desktop and mobile containers
         const containers = [draftsContainer, draftsContainerMobile].filter(Boolean);
         containers.forEach(cont => {
             cont.querySelectorAll('.draft-item').forEach(item => {
@@ -964,7 +921,6 @@ function attachEventListeners(container) {
         });
     };
 
-    // --- Event Listeners ---
     btnCameraMode.onclick = showCameraMode;
     btnUploadMode.onclick = () => uploadInput.click();
     
@@ -1002,19 +958,15 @@ function attachEventListeners(container) {
     
     attachDraftClickHandlers();
     
-    // --- Caption input counter ---
     captionInput.oninput = () => {
         captionCount.textContent = captionInput.value.length;
     };
     
-    // --- Next button: Show share view ---
     btnNext.onclick = async () => {
-        // Prepare the image for sharing
         let imageUrl;
         let rawImageUrl;
         
         if (currentMode === 'camera') {
-            // First capture the raw frame (before filters/stickers)
             const rawCanvas = document.createElement('canvas');
             rawCanvas.width = cameraVideo.videoWidth;
             rawCanvas.height = cameraVideo.videoHeight;
@@ -1022,7 +974,6 @@ function attachEventListeners(container) {
             rawCtx.drawImage(cameraVideo, 0, 0);
             rawImageUrl = rawCanvas.toDataURL('image/png');
             
-            // Then capture with filter and stickers baked in for preview
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = cameraVideo.videoWidth;
             tempCanvas.height = cameraVideo.videoHeight;
@@ -1034,11 +985,9 @@ function attachEventListeners(container) {
             await bakeStickersToContext(ctx, tempCanvas.width, tempCanvas.height);
             imageUrl = tempCanvas.toDataURL('image/png');
         } else {
-            // For image mode, get raw export first
             compositor.render();
             rawImageUrl = compositor.export();
             
-            // Then bake stickers for preview
             const visualWidth = stickerLayer.offsetWidth || editorCanvas.offsetWidth || editorCanvas.width;
             const scaleMultiplier = editorCanvas.width / visualWidth;
             
@@ -1052,7 +1001,6 @@ function attachEventListeners(container) {
             imageUrl = compositor.export();
         }
         
-        // Store both images and show share view
         pendingImageUrl = imageUrl;
         pendingRawImageUrl = rawImageUrl;
         sharePreviewImage.src = imageUrl;
@@ -1062,9 +1010,7 @@ function attachEventListeners(container) {
         shareView.classList.add('flex');
     };
     
-    // --- Back button: Return to editor (save to drafts) ---
     btnBackEditor.onclick = async () => {
-        // Save the captured image to drafts before going back
         if (pendingImageUrl) {
             try {
                 const generateThumbnail = async (dataUrl, maxWidth = 150, maxHeight = 150) => {
@@ -1116,7 +1062,6 @@ function attachEventListeners(container) {
         clearStickers();
     };
     
-    // --- Post button: Upload to backend ---
     btnPost.onclick = async () => {
         if (!pendingImageUrl) return;
         
@@ -1126,7 +1071,6 @@ function attachEventListeners(container) {
         try {
             const jwtToken = getCookie('session_token');
             
-            // Send to backend for sticker/filter processing
             const stickersData = appliedStickers.map(s => ({
                 type: s.type,
                 imageUrl: s.imageUrl,
@@ -1137,15 +1081,13 @@ function attachEventListeners(container) {
             
             let finalImageUrl = pendingImageUrl;
             
-            // Process through backend if there are modifications
             if (stickersData.length > 0 || currentFilter !== 'none') {
-                // Use the raw image captured at Next click time
                 const processFormData = new FormData();
                 processFormData.append('image', pendingRawImageUrl);
                 processFormData.append('filter', currentFilter);
                 processFormData.append('stickers', JSON.stringify(stickersData));
                 
-                const processRes = await fetch(`${window.env.APP_URL}index.php/process-image`, {
+                const processRes = await apiFetch(`${window.env.APP_URL}index.php/process-image`, {
                     method: 'POST',
                     body: processFormData,
                     credentials: 'include',
@@ -1164,14 +1106,13 @@ function attachEventListeners(container) {
                 }
             }
             
-            // Upload to server
-            const blob = await fetch(finalImageUrl).then(r => r.blob());
+            const blob = await apiFetch(finalImageUrl).then(r => r.blob());
             const uploadFormData = new FormData();
             const extension = finalImageUrl.split(";").shift().split("/").pop() || 'png';
             uploadFormData.append('image', blob, `post-${Date.now()}.${extension}`);
             uploadFormData.append('description', captionInput.value.trim());
             
-            const uploadRes = await fetch(`${window.env.APP_URL}index.php/upload-post`, {
+            const uploadRes = await apiFetch(`${window.env.APP_URL}index.php/upload-post`, {
                 method: 'POST',
                 body: uploadFormData,
                 credentials: 'include',
@@ -1206,6 +1147,5 @@ function attachEventListeners(container) {
     });
     resizeObserver.observe(container.querySelector('#canvas-wrapper'));
     
-    // Initialize with camera mode
     showCameraMode();
 }

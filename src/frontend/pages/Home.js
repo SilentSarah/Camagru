@@ -17,6 +17,7 @@ import Post, { PostSkeleton } from '../components/Post.js';
 import { getCookie } from '../js/Utils.js';
 import { showToast } from '../components/Toast.js';
 import { abortController } from '../js/Router.js';
+import apiFetch from '../js/ApiClient.js';
 
 export default async function Home() {
     let cursor = 0;
@@ -45,18 +46,16 @@ export default async function Home() {
     const emptyState = container.querySelector('#empty-state');
     const session_token = getCookie('session_token');
 
-    // Show initial skeletons
     for (let i = 0; i < 3; i++) {
         feedContainer.appendChild(PostSkeleton());
     }
 
-    // Fetch posts
     const fetchPosts = async () => {
         if (isLoading || !hasMore) return [];
         isLoading = true;
 
         try {
-            const res = await fetch(`${window.env.APP_URL}index.php/feed?limit=${window.env.PHOTOS_PER_PAGE}&cursor=${cursor}`, {
+            const res = await apiFetch(`${window.env.APP_URL}index.php/feed?limit=${window.env.PHOTOS_PER_PAGE}&cursor=${cursor}`, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {
@@ -87,7 +86,6 @@ export default async function Home() {
         }
     };
 
-    // Render posts
     const renderPosts = (posts) => {
         posts.forEach(photo => {
             const postEl = Post({ photo });
@@ -95,10 +93,8 @@ export default async function Home() {
         });
     };
 
-    // Initial load
     const initialPosts = await fetchPosts();
     
-    // Clear skeletons
     feedContainer.innerHTML = '';
     
     if (initialPosts.length === 0) {
@@ -108,12 +104,10 @@ export default async function Home() {
         renderPosts(initialPosts);
     }
 
-    // Hide sentinel if no more
     if (!hasMore) {
         sentinel.classList.add('hidden');
     }
 
-    // Infinite scroll with IntersectionObserver
     const observer = new IntersectionObserver(async (entries) => {
         const entry = entries[0];
         if (entry.isIntersecting && !isLoading && hasMore) {
