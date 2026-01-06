@@ -118,15 +118,6 @@ class AuthController
                 "email" => $_POST["email"],
                 "is_verified" => 0,
             ]);
-
-            $jwt = generate_jwt_token("HS256", [
-                "id" => $user->getId(),
-                "username" => $user->getUsername(),
-                "fullname" => $user->getFullname(),
-                "email" => $user->getEmail(),
-                "exp" => time() + 86400 * 7,
-            ]);
-            setcookie("session_token", $jwt, time() + 86400 * 7, "/", "", false, false);
             sendVerifcationMail($user);
             $response = new HttpResponse(201, "User created successfully", ["message" => "User created successfully"]);
         } catch (PDOException $e) {
@@ -285,7 +276,6 @@ class AuthController
             return;
         }
 
-        // Sanitize query
         $query = htmlspecialchars($query, ENT_QUOTES, 'UTF-8');
 
         try {
