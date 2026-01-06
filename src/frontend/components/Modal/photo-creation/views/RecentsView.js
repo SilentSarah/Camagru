@@ -13,9 +13,7 @@ export function createRecentsView({ recents, onSelect, onClearAll, onDelete }) {
     const allRecents = [...recents, ...drafts];
 
     const render = () => {
-        // Simple re-render logic or just render once? 
-        // For now, we render static HTML. If state changes (delete), the controller might re-render the whole view or we handle it here.
-        // Let's assume re-rendering the whole view is cheap enough or we manipulate DOM.
+
         
         container.innerHTML = `
             <div class="flex justify-between items-center mb-4">

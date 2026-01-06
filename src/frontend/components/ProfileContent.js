@@ -99,7 +99,6 @@ export default function ProfileContent(viewedUser, photos) {
             </div>`;
         }
     } else {
-        // Render initial photos
         photos.forEach(async photo => {
             const card = await renderPhotoCard(photo);
             if (card) {

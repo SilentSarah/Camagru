@@ -17,11 +17,13 @@
 require_once __DIR__ . '/SchemaInspector.php';
 require_once __DIR__ . '/ModelParser.php';
 
-class MigrationGenerator {
+class MigrationGenerator
+{
     private SchemaInspector $inspector;
     private ModelParser $parser;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->inspector = new SchemaInspector();
         $this->parser = new ModelParser();
     }
@@ -32,7 +34,8 @@ class MigrationGenerator {
      * @param string $description
      * @return array ['up' => string, 'down' => string, 'name' => string]
      */
-    public function generateMigration(string $modelClass, string $description = ''): array {
+    public function generateMigration(string $modelClass, string $description = ''): array
+    {
         $modelSchema = $this->parser->parseModel($modelClass);
         $tableName = $modelSchema['table'];
         $modelColumns = $modelSchema['columns'];
@@ -41,15 +44,15 @@ class MigrationGenerator {
         $downSql = '';
 
         if (!$this->inspector->tableExists($tableName)) {
-            // Generate CREATE TABLE
+
             [$upSql, $downSql] = $this->generateCreateTable($tableName, $modelColumns);
         } else {
-            // Generate ALTER TABLE
+
             $dbSchema = $this->inspector->getTableSchema($tableName);
             [$upSql, $downSql] = $this->generateAlterTable($tableName, $modelColumns, $dbSchema);
         }
 
-        // Generate migration name
+
         $timestamp = date('YmdHis');
         $slug = $this->slugify($description ?: "update_$tableName");
         $migrationName = "{$timestamp}_{$slug}";
@@ -67,9 +70,10 @@ class MigrationGenerator {
      * @param array $columns
      * @return array [up, down]
      */
-    private function generateCreateTable(string $tableName, array $columns): array {
+    private function generateCreateTable(string $tableName, array $columns): array
+    {
         $columnDefs = [];
-        
+
         foreach ($columns as $name => $info) {
             $def = "$name {$info['type']}";
             if (!$info['nullable']) {
@@ -85,10 +89,10 @@ class MigrationGenerator {
             $columnDefs[] = $def;
         }
 
-        $upSql = "CREATE TABLE IF NOT EXISTS $tableName (\n    " 
-               . implode(",\n    ", $columnDefs) 
-               . "\n);";
-        
+        $upSql = "CREATE TABLE IF NOT EXISTS $tableName (\n    "
+            . implode(",\n    ", $columnDefs)
+            . "\n);";
+
         $downSql = "DROP TABLE IF EXISTS $tableName;";
 
         return [$upSql, $downSql];
@@ -101,20 +105,21 @@ class MigrationGenerator {
      * @param array $dbSchema
      * @return array [up, down]
      */
-    private function generateAlterTable(string $tableName, array $modelColumns, array $dbSchema): array {
+    private function generateAlterTable(string $tableName, array $modelColumns, array $dbSchema): array
+    {
         $upStatements = [];
         $downStatements = [];
 
-        // Create a map of existing columns
+
         $existingColumns = [];
         foreach ($dbSchema as $col) {
             $existingColumns[$col['name']] = $col;
         }
 
-        // Check for new columns
+
         foreach ($modelColumns as $name => $info) {
             if (!isset($existingColumns[$name])) {
-                // Add column
+
                 $def = "{$info['type']}";
                 if (!$info['nullable']) {
                     $def .= " NOT NULL";
@@ -126,12 +131,12 @@ class MigrationGenerator {
                 $upStatements[] = "ALTER TABLE $tableName ADD COLUMN $name $def;";
                 $downStatements[] = "ALTER TABLE $tableName DROP COLUMN $name;";
             } else {
-                // Check if type changed
+
                 $existing = $existingColumns[$name];
                 $existingType = strtoupper($existing['type']);
                 $newType = strtoupper($info['type']);
-                
-                // Normalize types for comparison
+
+
                 if ($this->typesAreDifferent($existing, $info)) {
                     $def = "{$info['type']}";
                     if (!$info['nullable']) {
@@ -142,7 +147,7 @@ class MigrationGenerator {
                         $def .= " DEFAULT $defaultVal";
                     }
                     $upStatements[] = "ALTER TABLE $tableName MODIFY COLUMN $name $def;";
-                    
+
                     $oldDef = "{$existing['full_type']}";
                     if ($existing['nullable'] === 'NO') {
                         $oldDef .= " NOT NULL";
@@ -152,11 +157,11 @@ class MigrationGenerator {
             }
         }
 
-        // Check for removed columns
+
         foreach ($existingColumns as $name => $info) {
             if (!isset($modelColumns[$name]) && $name !== 'id') {
                 $upStatements[] = "ALTER TABLE $tableName DROP COLUMN $name;";
-                
+
                 $def = "{$info['full_type']}";
                 if ($info['nullable'] === 'NO') {
                     $def .= " NOT NULL";
@@ -181,11 +186,12 @@ class MigrationGenerator {
     /**
      * Check if types or defaults are different
      */
-    private function typesAreDifferent(array $dbColumn, array $modelColumn): bool {
+    private function typesAreDifferent(array $dbColumn, array $modelColumn): bool
+    {
         $dbType = strtoupper(preg_replace('/\(.*\)/', '', $dbColumn['type']));
         $modelType = strtoupper(preg_replace('/\(.*\)/', '', $modelColumn['type']));
-        
-        // Handle TINYINT as BOOLEAN
+
+
         if ($dbType === 'TINYINT' && $modelType === 'BOOLEAN') {
             $dbType = 'BOOLEAN';
         }
@@ -194,29 +200,28 @@ class MigrationGenerator {
             return true;
         }
 
-        // Compare default values
+
         $dbDefault = $dbColumn['default_value'];
         $modelDefault = $modelColumn['default'];
 
-        // Normalize model default for comparison
+
         if ($modelDefault !== null) {
             if (is_bool($modelDefault)) {
                 $modelDefault = $modelDefault ? '1' : '0'; // MySQL stores bools as 1/0
             } elseif (is_string($modelDefault)) {
-                // Remove quotes if present in DB default (MySQL sometimes adds them)
                 $modelDefault = (string)$modelDefault;
             } else {
                 $modelDefault = (string)$modelDefault;
             }
         }
 
-        // Normalize DB default
+
         if ($dbDefault !== null) {
-             // MySQL might return 'NULL' string for null default in some versions/configs, but usually returns null
-             // It might also return defaults as strings even for numbers
+            // MySQL might return 'NULL' string for null default in some versions/configs, but usually returns null
+            // It might also return defaults as strings even for numbers
         }
 
-        // Handle NULLs
+
         if ($dbDefault === null && $modelDefault !== null) return true;
         if ($dbDefault !== null && $modelDefault === null) return true;
         if ($dbDefault === null && $modelDefault === null) return false;
@@ -227,7 +232,8 @@ class MigrationGenerator {
     /**
      * Convert string to slug
      */
-    private function slugify(string $text): string {
+    private function slugify(string $text): string
+    {
         $text = preg_replace('/[^a-z0-9]+/i', '_', strtolower($text));
         return trim($text, '_');
     }
@@ -238,7 +244,8 @@ class MigrationGenerator {
      * @param string $type
      * @return string
      */
-    private function formatDefaultValue(mixed $value, string $type): string {
+    private function formatDefaultValue(mixed $value, string $type): string
+    {
         if (is_bool($value)) {
             return $value ? 'TRUE' : 'FALSE';
         }

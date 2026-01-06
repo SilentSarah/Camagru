@@ -51,7 +51,6 @@ export function createSelectionView({ onUpload, onCamera, onRecents, recents = [
         ` : ''}
     `;
 
-    // Handlers
     container.querySelector('#btn-upload').onclick = () => container.querySelector('#file-input').click();
     container.querySelector('#btn-camera').onclick = onCamera;
     container.querySelector('#btn-recents').onclick = onRecents;
@@ -61,7 +60,6 @@ export function createSelectionView({ onUpload, onCamera, onRecents, recents = [
         if (file) validateAndSelectFile(file, onUpload);
     };
     
-    // Drag and Drop
     container.ondragover = (e) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'copy';
@@ -80,24 +78,16 @@ export function createSelectionView({ onUpload, onCamera, onRecents, recents = [
         }
     };
 
-    // Recents Click
     container.querySelectorAll('.recent-item').forEach(item => {
         item.onclick = () => {
             const index = parseInt(item.dataset.index);
             const recent = recents[index];
             if (recent) {
-                // We fake a file upload or just pass the data directly?
-                // The main controller should handle "loading from recent"
-                // Ideally onRecents should handle switching view, but here we are clicking a SPECIFIC recent.
-                // Let's call a specific callback or reuse onRecent with data?
-                // The original code passed (imageUrl, filter, stickers) to renderEditorView.
-                // We'll expose a separate callback `onSelectRecent`
                 if (container.onSelectRecent) container.onSelectRecent(recent);
             }
         };
     });
     
-    // Attach method for easy access (hacky but effective)
     container.setOnSelectRecent = (cb) => { container.onSelectRecent = cb; };
 
     return container;

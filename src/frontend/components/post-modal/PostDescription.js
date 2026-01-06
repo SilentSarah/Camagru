@@ -28,7 +28,6 @@ export default function PostDescription({ user, description, createdAt }) {
         return '';
     }
 
-    // Format date
     const formatDate = (dateString) => {
         const date = new Date(dateString);
         const options = { year: 'numeric', month: 'long', day: 'numeric' };

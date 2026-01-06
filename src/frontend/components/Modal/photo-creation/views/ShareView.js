@@ -43,7 +43,6 @@ export function createShareView({ imageDataUrl }) {
         </div>
     `;
 
-    // Getter for the caption
     container.getCaption = () => container.querySelector('#caption-input').value;
 
     return container;

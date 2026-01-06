@@ -84,7 +84,6 @@ export function createLiveEditorView({ mode = 'camera', imageUrl = null, initial
     let mediaStream = null;
     const stickerLayer = container.querySelector('#sticker-layer');
     
-    // Sticker manager
     const stickerManager = new StickerManager(stickerLayer, () => {
         if (onStateChange) {
             onStateChange({
@@ -94,12 +93,10 @@ export function createLiveEditorView({ mode = 'camera', imageUrl = null, initial
         }
     });
 
-    // Load initial stickers
     if (initialStickers && initialStickers.length > 0) {
         stickerManager.load(initialStickers);
     }
 
-    // --- Camera Mode ---
     if (isCamera) {
         const video = container.querySelector('#camera-video');
         
@@ -118,27 +115,22 @@ export function createLiveEditorView({ mode = 'camera', imageUrl = null, initial
         
         startCamera();
         
-        // Apply filter to video
         video.style.filter = currentFilter === 'none' ? '' : currentFilter;
         stickerLayer.style.filter = currentFilter === 'none' ? '' : currentFilter;
         
-        // Capture button
         container.querySelector('#capture-btn').onclick = async () => {
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
             
-            // Apply filter
             ctx.filter = currentFilter === 'none' ? 'none' : currentFilter;
             
-            // Mirror and draw
             ctx.translate(canvas.width, 0);
             ctx.scale(-1, 1);
             ctx.drawImage(video, 0, 0);
             ctx.setTransform(1, 0, 0, 1, 0, 0);
             
-            // Bake stickers
             const stickers = stickerManager.getData();
             ctx.filter = currentFilter === 'none' ? 'none' : currentFilter;
             
@@ -186,7 +178,6 @@ export function createLiveEditorView({ mode = 'camera', imageUrl = null, initial
             }
         };
     } 
-    // --- Image Mode ---
     else {
         const canvas = container.querySelector('#editor-canvas');
         const compositor = new PhotoCompositor(canvas);
@@ -194,7 +185,6 @@ export function createLiveEditorView({ mode = 'camera', imageUrl = null, initial
         compositor.loadImage(imageUrl).then(() => {
             compositor.setFilter(initialFilter);
             
-            // Update sticker layer dimensions
             const updateStickerLayer = () => {
                 const canvasRect = canvas.getBoundingClientRect();
                 const wrapperRect = container.querySelector('#preview-wrapper').getBoundingClientRect();
@@ -217,7 +207,6 @@ export function createLiveEditorView({ mode = 'camera', imageUrl = null, initial
             }
         });
         
-        // Next button - bake and proceed
         container.querySelector('#capture-btn').onclick = async () => {
             await compositor.bakeStickers(stickerManager.getData());
             const dataUrl = compositor.export();
@@ -231,7 +220,6 @@ export function createLiveEditorView({ mode = 'camera', imageUrl = null, initial
         };
     }
 
-    // --- Tab Logic ---
     const tabFilters = container.querySelector('#tab-filters');
     const tabStickers = container.querySelector('#tab-stickers');
     const panelFilters = container.querySelector('#panel-filters');
@@ -256,13 +244,11 @@ export function createLiveEditorView({ mode = 'camera', imageUrl = null, initial
     tabFilters.onclick = () => switchTab('filters');
     tabStickers.onclick = () => switchTab('stickers');
 
-    // --- Filter Logic ---
     container.querySelectorAll('.filter-btn').forEach(btn => {
         btn.onclick = () => {
             const filter = btn.dataset.filter;
             currentFilter = filter;
             
-            // Apply to preview
             if (isCamera) {
                 const video = container.querySelector('#camera-video');
                 video.style.filter = filter === 'none' ? '' : filter;
@@ -274,7 +260,6 @@ export function createLiveEditorView({ mode = 'camera', imageUrl = null, initial
             
             stickerLayer.style.filter = filter === 'none' ? '' : filter;
             
-            // UI Update
             container.querySelectorAll('.filter-btn div').forEach(d => d.classList.remove('border-blue-500'));
             container.querySelectorAll('.filter-btn span').forEach(s => s.classList.remove('text-blue-500'));
             btn.querySelector('div').classList.add('border-blue-500');
@@ -289,7 +274,6 @@ export function createLiveEditorView({ mode = 'camera', imageUrl = null, initial
         };
     });
 
-    // --- Sticker Upload ---
     container.querySelector('#custom-sticker-input').onchange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -301,7 +285,6 @@ export function createLiveEditorView({ mode = 'camera', imageUrl = null, initial
         }
     };
 
-    // --- Stop Camera ---
     container.stopCamera = () => {
         if (mediaStream) {
             mediaStream.getTracks().forEach(track => track.stop());
