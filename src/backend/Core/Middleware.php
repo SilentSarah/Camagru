@@ -15,9 +15,11 @@
  */
 
 require_once "Controllers/AuthController.php";
-require_once __DIR__ . "/../Core/HttpResponse.php";
-require_once __DIR__ . "/../Core/Cors.php";
+require_once __DIR__ . "/HttpResponse.php";
+require_once __DIR__ . "/Cors.php";
 require_once __DIR__ . "/Csrf.php";
+require_once __DIR__ . "/RateLimiter.php";
+require_once __DIR__ . "/Utils.php";
 
 /**
  * Custom built Middleware class by Sarah Hicham Meftah, Contains one static method handle <br />
@@ -37,9 +39,22 @@ class Middleware
     public static function handle($controller, $action, $methods, $is_protected)
     {
         $requested_method = $_SERVER["REQUEST_METHOD"];
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
         cors();
         if ($requested_method === "OPTIONS") {
+            return;
+        }
+
+        $result = check_rate_limit($ip, $requested_method, $is_protected);
+
+        if (!$result['allowed']) {
+            header("Retry-After: " . $result['retry_after']);
+            $response = new HttpResponse(429, "Too Many Requests", [
+                "error" => "Rate limit exceeded. Please try again later.",
+                "retry_after" => $result['retry_after']
+            ]);
+            $response->sendJson();
             return;
         }
 
@@ -74,7 +89,7 @@ class Middleware
             }
 
             $claims = get_jwt_claims($jwt);
-            $user = new User()->find($claims["id"]); 
+            $user = new User()->find($claims["id"]);
             if (!$user) {
                 $response = new HttpResponse(401, "Unauthorized", ["error" => "Unauthorized"]);
                 $response->sendJson();

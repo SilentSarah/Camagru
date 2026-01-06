@@ -23,35 +23,29 @@ require_once __DIR__ . "/RateLimiter.php";
 
 class NotificationMailer
 {
-    // Rate limit: 1 notification per type per post per 5 minutes (300 seconds)
-    private const RATE_LIMIT_WINDOW = 300;
-
     /**
      * Send a like notification email to the post owner
      */
     public static function sendLikeNotification(User $postOwner, User $liker, Photo $photo): void
     {
-        // Don't notify if user liked their own post
         if ($postOwner->getId() === $liker->getId()) {
             return;
         }
 
-        // Check if user has email notifications enabled
         if (!$postOwner->getEmailNotifications()) {
             return;
         }
 
-        // Check rate limit
         $rateLimiter = RateLimiter::getInstance();
         $key = "notification:like:{$postOwner->getId()}:{$photo->getId()}";
-        if (!$rateLimiter->attempt($key, 1, self::RATE_LIMIT_WINDOW)) {
+        if (!$rateLimiter->attempt($key, 1, Config::RATE_LIMIT_WINDOW)) {
             return;
         }
 
         $postLink = Config::FRONTEND_URL . "/post?id=" . $photo->getId();
         $title = "Someone liked your post!";
         $action = "liked your post.";
-        $commentSection = ""; // No comment for likes
+        $commentSection = "";
 
         self::sendNotificationEmail(
             $postOwner->getEmail(),
@@ -69,20 +63,17 @@ class NotificationMailer
      */
     public static function sendCommentNotification(User $postOwner, User $commenter, Photo $photo, string $comment): void
     {
-        // Don't notify if user commented on their own post
         if ($postOwner->getId() === $commenter->getId()) {
             return;
         }
 
-        // Check if user has email notifications enabled
         if (!$postOwner->getEmailNotifications()) {
             return;
         }
 
-        // Check rate limit
         $rateLimiter = RateLimiter::getInstance();
         $key = "notification:comment:{$postOwner->getId()}:{$photo->getId()}";
-        if (!$rateLimiter->attempt($key, 1, self::RATE_LIMIT_WINDOW)) {
+        if (!$rateLimiter->attempt($key, 1, Config::RATE_LIMIT_WINDOW)) {
             return;
         }
 
@@ -90,7 +81,6 @@ class NotificationMailer
         $title = "New comment on your post!";
         $action = "commented on your post:";
 
-        // Truncate comment preview
         $commentPreview = strlen($comment) > 100 ? substr($comment, 0, 100) . "..." : $comment;
         $commentSection = '<div class="comment-preview">"' . htmlspecialchars($commentPreview) . '"</div>';
 

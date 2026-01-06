@@ -33,7 +33,24 @@ function log_stuff(...$stuff)
     file_put_contents("php://stdout", "[LOG] " . implode("\n", $stuff) . "\n");
 }
 
-require_once __DIR__ . "/Config.php";
+function check_rate_limit($ip, $requested_method, $is_protected)
+{
+    $rateLimiter = RateLimiter::getInstance();
+
+    if (!$is_protected) {
+        $limit = Config::RATE_LIMIT_PUBLIC;
+        $key = "api:public:{$ip}";
+    } else if (in_array($requested_method, ['POST', 'PUT', 'DELETE', 'PATCH'])) {
+        $limit = Config::RATE_LIMIT_WRITE;
+        $key = "api:write:{$ip}";
+    } else {
+        $limit = Config::RATE_LIMIT_READ;
+        $key = "api:read:{$ip}";
+    }
+
+    $result = $rateLimiter->attemptWithInfo($key, $limit, Config::RATE_LIMIT_WINDOW);
+    return $result;
+}
 
 class ImageHelpers
 {

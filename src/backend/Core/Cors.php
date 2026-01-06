@@ -28,6 +28,7 @@ function cors() {
             header('Access-Control-Allow-Credentials: ' . (Config::ALLOW_CREDENTIALS ? 'true' : 'false'));
             header('Access-Control-Max-Age: 86400');
             header('Access-Control-Allow-Methods: ' . implode(', ', Config::ALLOWED_METHODS));
+            header('Access-Control-Expose-Headers: ' . implode(', ', Config::ALLOWED_HEADERS));
         }
     }
     if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {

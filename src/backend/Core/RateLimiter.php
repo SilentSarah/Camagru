@@ -15,6 +15,8 @@
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
+require_once __DIR__ . "/Utils.php";
+
 /**
  * Simple file-based rate limiter with key-value storage and TTL support
  */
@@ -93,7 +95,6 @@ class RateLimiter
             return null;
         }
 
-        // Check if expired
         if ($data['expires_at'] !== null && time() > $data['expires_at']) {
             $this->delete($key);
             return null;
@@ -186,6 +187,59 @@ class RateLimiter
     }
 
     /**
+     * Get time remaining until a key expires
+     * 
+     * @param string $key The key to check
+     * @return int Seconds remaining, 0 if expired or not found
+     */
+    public function getTimeRemaining(string $key): int
+    {
+        $filePath = $this->getFilePath($key);
+
+        if (!file_exists($filePath)) {
+            return 0;
+        }
+
+        $content = file_get_contents($filePath);
+        if ($content === false) {
+            return 0;
+        }
+
+        $data = json_decode($content, true);
+        if ($data === null || !isset($data['expires_at']) || $data['expires_at'] === null) {
+            return 0;
+        }
+
+        $remaining = $data['expires_at'] - time();
+        return max(0, $remaining);
+    }
+
+    /**
+     * Check rate limit with retry info - returns array with allowed status and retry time
+     * 
+     * @param string $key Unique identifier for the rate limit
+     * @param int $maxAttempts Maximum attempts allowed
+     * @param int $windowSeconds Time window in seconds
+     * @return array ['allowed' => bool, 'retry_after' => int]
+     */
+    public function attemptWithInfo(string $key, int $maxAttempts = 1, int $windowSeconds = 60): array
+    {
+        $count = $this->get($key);
+
+        if ($count === null) {
+            $this->set($key, 1, $windowSeconds);
+            return ['allowed' => true, 'retry_after' => 0];
+        }
+
+        if ($count >= $maxAttempts) {
+            return ['allowed' => false, 'retry_after' => $this->getTimeRemaining($key)];
+        }
+
+        $this->increment($key);
+        return ['allowed' => true, 'retry_after' => 0];
+    }
+
+    /**
      * Clear all expired entries (cleanup)
      */
     public function cleanup(): void
@@ -203,4 +257,3 @@ class RateLimiter
         }
     }
 }
-
