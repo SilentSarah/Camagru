@@ -28,6 +28,20 @@ export default async function Profile() {
     let cursor = 0;
     let isLoading = false;
     let hasMore = true;
+
+    const meta = {
+        title: user.username,
+        description: user.bio,
+        image: `${user.profile_picture_url}`,
+        type: "profile:username"
+    };
+
+    Object.entries(meta).forEach(([key, value]) => {
+        const metaTag = document.createElement('meta');
+        metaTag.setAttribute('property', `og:${key}`);
+        metaTag.setAttribute('content', value);
+        document.head.appendChild(metaTag);
+    });
     
     const container = document.createElement('div');
     container.className = "h-screen w-screen flex flex-col justify-start items-center bg-black text-white p-4 md:p-8 font-sans overflow-y-auto pb-20 md:pb-0";
@@ -39,7 +53,7 @@ export default async function Profile() {
     
     if (userId && parseInt(userId) !== user.id) {
         try {
-            const userRes = await apiFetch(`${window.env.APP_URL}index.php/user-profile?user_id=${userId}`, {
+            const userRes = await apiFetch(`${window.env.APP_URL}/user-profile?user_id=${userId}`, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {
@@ -71,7 +85,7 @@ export default async function Profile() {
         isLoading = true;
         
         try {
-            const res = await apiFetch(`${window.env.APP_URL}index.php/photos?user_id=${profileUser.id}&limit=${window.env.PHOTOS_PER_PAGE}&cursor=${cursor}`, {
+            const res = await apiFetch(`${window.env.APP_URL}/photos?user_id=${profileUser.id}&limit=${window.env.PHOTOS_PER_PAGE}&cursor=${cursor}`, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {

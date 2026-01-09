@@ -40,7 +40,7 @@ export default async function ResetPassword() {
     `;
 
     try {
-        const response = await apiFetch(`${window.env.APP_URL}index.php/reset-password?token=${token}`, {
+        const response = await apiFetch(`${window.env.APP_URL}/reset-password?token=${token}`, {
             method: 'GET',
             credentials: 'include',
             signal: abortController.signal
@@ -128,7 +128,7 @@ function renderForm(container, token) {
 
         try {
             const csrfToken = await FetchCSRF();
-            const response = await apiFetch(`${window.env.APP_URL}index.php/reset-password?token=${token}`, {
+            const response = await apiFetch(`${window.env.APP_URL}/reset-password?token=${token}`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {

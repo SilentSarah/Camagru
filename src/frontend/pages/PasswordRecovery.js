@@ -73,7 +73,7 @@ export default async function PasswordRecovery() {
 
         try {
             const csrfToken = await getCsrfToken();
-            const response = await apiFetch(`${window.env.APP_URL}index.php/password-recovery`, {
+            const response = await apiFetch(`${window.env.APP_URL}/password-recovery`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {

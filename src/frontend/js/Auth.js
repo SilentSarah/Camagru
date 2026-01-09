@@ -39,7 +39,7 @@ export async function useUser(route) {
         }
         return false;
     }
-    const response = await apiFetch(`${window.env.APP_URL}index.php/user`, {
+    const response = await apiFetch(`${window.env.APP_URL}/user`, {
         method: "GET",
         credentials: "include",
         headers: {

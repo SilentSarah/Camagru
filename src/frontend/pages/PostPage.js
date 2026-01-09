@@ -22,6 +22,7 @@ import { getCookie, goTo } from '../js/Utils.js';
 import { openConfirmationModal } from '../components/Modal/ConfirmationModal.js';
 import { abortController } from '../js/Router.js';
 import apiFetch from '../js/ApiClient.js';
+import routerHistory from '../js/RouterHistory.js';
 
 export default async function PostPage() {
     const container = document.createElement('div');
@@ -52,7 +53,7 @@ export default async function PostPage() {
 
     try {
         const session_token = getCookie('session_token');
-        const response = await apiFetch(`${window.env.APP_URL}index.php/photo?id=${postId}`, {
+        const response = await apiFetch(`${window.env.APP_URL}/photo?id=${postId}`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -72,20 +73,7 @@ export default async function PostPage() {
             throw new Error('Post not found');
         }
 
-        const imageRes = await apiFetch(`${window.env.APP_URL}index.php/uploads?image=${photo.file_name}`, {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-                'Authorization': `Bearer ${session_token}`
-            },
-            signal: abortController.signal
-        });
-
-        let imageUrl = '';
-        if (imageRes.ok) {
-            const blob = await imageRes.blob();
-            imageUrl = URL.createObjectURL(blob);
-        }
+        const imageUrl = `${window.env.UPLOADS_URL}/${photo.file_name}`;
 
         const user = photo.user || {
             id: photo.user_id,
@@ -116,7 +104,14 @@ export default async function PostPage() {
         const backBtn = document.createElement('button');
         backBtn.className = 'absolute top-4 left-4 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors z-10';
         backBtn.innerHTML = '<i class="fa-solid fa-arrow-left text-white"></i>';
-        backBtn.onclick = () => history.back();
+        backBtn.onclick = () => {
+            routerHistory.set(routerHistory.get() - 1);
+            if (routerHistory.get() > 0) {
+                history.back();
+            } else {
+                goTo('/');
+            }
+        };
         imgSection.appendChild(backBtn);
 
         const isAuthor = currentUser?.id === photo.user_id;
@@ -285,7 +280,7 @@ export default async function PostPage() {
             postCommentBtn.textContent = 'Posting...';
 
             try {
-                const response = await apiFetch(`${window.env.APP_URL}create-comment`, {
+                const response = await apiFetch(`${window.env.APP_URL}/create-comment`, {
                     method: 'POST',
                     credentials: 'include',
                     headers: {
@@ -486,6 +481,5 @@ export default async function PostPage() {
         `;
         container.querySelector('#go-back').onclick = () => history.back();
     }
-
     return container;
 }

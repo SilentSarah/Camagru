@@ -131,7 +131,7 @@ export default async function Settings() {
             const csrfToken = await FetchCSRF();
             const token = getCookie('session_token');
             
-            const response = await apiFetch(`${window.env.APP_URL}index.php/upload-profile-picture`, {
+            const response = await apiFetch(`${window.env.APP_URL}/upload-profile-picture`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -206,7 +206,7 @@ export default async function Settings() {
 
             const token = getCookie('session_token');
             
-            const response = await apiFetch(`${window.env.APP_URL}index.php/update-account`, {
+            const response = await apiFetch(`${window.env.APP_URL}/update-account`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -222,7 +222,6 @@ export default async function Settings() {
 
             if (response.ok) {
                 showToast(result.message || 'Settings updated', 'success');
-                goTo('/settings');
             } else {
                 showToast(result.error || 'Update failed', 'error');
             }
@@ -282,7 +281,7 @@ export default async function Settings() {
             const csrfToken = await FetchCSRF();
             const token = getCookie('session_token');
 
-            const response = await apiFetch(`${window.env.APP_URL}index.php/delete-account`, {
+            const response = await apiFetch(`${window.env.APP_URL}/delete-account`, {
                 method: 'DELETE',
                 credentials: 'include',
                 headers: {

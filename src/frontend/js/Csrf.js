@@ -22,7 +22,7 @@ import apiFetch from './ApiClient.js';
  */
 export default async function FetchCSRF() {
     try {
-        const response = await apiFetch(`${window.env.APP_URL}index.php/csrf` , {
+        const response = await apiFetch(`${window.env.APP_URL}/csrf` , {
             method: 'GET',
             credentials: 'include',
         });

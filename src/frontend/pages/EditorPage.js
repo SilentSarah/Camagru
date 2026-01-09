@@ -1087,7 +1087,7 @@ function attachEventListeners(container) {
                 processFormData.append('filter', currentFilter);
                 processFormData.append('stickers', JSON.stringify(stickersData));
                 
-                const processRes = await apiFetch(`${window.env.APP_URL}index.php/process-image`, {
+                const processRes = await apiFetch(`${window.env.APP_URL}/process-image`, {
                     method: 'POST',
                     body: processFormData,
                     credentials: 'include',
@@ -1112,7 +1112,7 @@ function attachEventListeners(container) {
             uploadFormData.append('image', blob, `post-${Date.now()}.${extension}`);
             uploadFormData.append('description', captionInput.value.trim());
             
-            const uploadRes = await apiFetch(`${window.env.APP_URL}index.php/upload-post`, {
+            const uploadRes = await apiFetch(`${window.env.APP_URL}/upload-post`, {
                 method: 'POST',
                 body: uploadFormData,
                 credentials: 'include',

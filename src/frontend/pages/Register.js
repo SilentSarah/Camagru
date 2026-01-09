@@ -95,16 +95,13 @@ export default async function Register() {
     `;
     
     const form = registerPage.querySelector('#register-form');
-    const submitBtn = registerPage.querySelector('#register-btn');
     form.onsubmit = async (e) => {
-        if (submitBtn.disabled) return;
-        
         e.preventDefault();
-        submitBtn.disabled = true;
+        
         const formData = new FormData(form);
         renderedResult.replaceChild(loadingPage, registerPage);
         try {
-            const response = await apiFetch(`${window.env.APP_URL}index.php/register`, {
+            const response = await apiFetch(`${window.env.APP_URL}/register`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -120,12 +117,10 @@ export default async function Register() {
                 const data = await response.json();
                 showToast(data.error, "error");
                 renderedResult.replaceChild(registerPage, loadingPage);
-                submitBtn.disabled = false;
             }
         } catch (error) {
             showToast("An error occurred, Please try again later", "error");
             renderedResult.replaceChild(registerPage, loadingPage);
-            submitBtn.disabled = false;
         }
     };
 

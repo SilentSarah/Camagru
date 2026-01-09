@@ -55,7 +55,7 @@ export default async function Home() {
         isLoading = true;
 
         try {
-            const res = await apiFetch(`${window.env.APP_URL}index.php/feed?limit=${window.env.PHOTOS_PER_PAGE}&cursor=${cursor}`, {
+            const res = await apiFetch(`${window.env.APP_URL}/feed?limit=${window.env.PHOTOS_PER_PAGE}&cursor=${cursor}`, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {

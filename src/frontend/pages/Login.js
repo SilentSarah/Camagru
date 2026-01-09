@@ -70,13 +70,12 @@ export default async function Login() {
     const form = div.querySelector('#login-form');
     const submitBtn = div.querySelector('#login-btn');
     form.onsubmit = async (e) => {
-        if (submitBtn.disabled) return;
-        
         e.preventDefault();
+        
         submitBtn.disabled = true;
         const formData = new FormData(form);
         try {
-            const response = await apiFetch(`${window.env.APP_URL}index.php/login`, {
+            const response = await apiFetch(`${window.env.APP_URL}/login`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
