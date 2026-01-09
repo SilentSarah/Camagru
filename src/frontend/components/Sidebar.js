@@ -13,7 +13,7 @@
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
-import { goTo } from "../js/Utils.js";
+import { goTo, escapeHtml } from "../js/Utils.js";
 import { user } from "../js/Auth.js";
 import { openSearchModal } from "./SearchModal.js";
 
@@ -48,9 +48,9 @@ export default function Sidebar() {
             </button>
             <a href="/profile" class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-900 transition-colors whitespace-nowrap">
                 <div class="w-6 h-6 rounded-full bg-gray-600 overflow-hidden flex-shrink-0">
-                    <img src=${user.profile_picture_url ?? `https://ui-avatars.com/api/?name=${user.username}`} alt="Profile" class="w-full h-full object-cover">
+                    <img src="${user.profile_picture_url ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}`}" alt="Profile" class="w-full h-full object-cover">
                 </div>
-                <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300">${user.username}</span>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300">${escapeHtml(user.username)}</span>
             </a>
         </nav>
 

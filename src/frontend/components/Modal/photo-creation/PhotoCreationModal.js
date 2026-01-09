@@ -263,7 +263,7 @@ export default function PhotoCreationModal({ onClose, onPost }) {
                 const jwtToken = getCookie('session_token');
                 const csrfToken = await FetchCSRF();
 
-                const response = await apiFetch(`${window.env.APP_URL}upload-post`, {
+                const response = await apiFetch(`${window.env.APP_URL}/upload-post`, {
                     method: 'POST',
                     body: formData,
                     credentials: 'include',

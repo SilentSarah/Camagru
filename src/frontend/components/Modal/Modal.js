@@ -3,6 +3,8 @@
  * Author: Camagru Team
  */
 
+import { escapeHtml } from '../../js/Utils.js';
+
 /**
  * Generic Modal Component
  * @param {Object} props
@@ -31,7 +33,7 @@ export default function Modal({ isOpen = true, onClose, title, children, classNa
         const header = document.createElement('div');
         header.className = 'flex items-center justify-between p-4 border-b border-gray-800';
         header.innerHTML = `
-            <h2 class="text-lg font-semibold text-white">${title}</h2>
+            <h2 class="text-lg font-semibold text-white">${escapeHtml(title)}</h2>
             <button class="modal-close-btn text-gray-400 hover:text-white transition-colors">
                 <i class="fa-solid fa-xmark text-xl"></i>
             </button>

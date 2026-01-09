@@ -4,6 +4,7 @@
  */
 
 import Modal from './Modal.js';
+import { escapeHtml } from '../../js/Utils.js';
 
 /**
  * Confirmation Modal Content
@@ -21,15 +22,15 @@ function ConfirmationModalContent({ message, confirmText = 'Confirm', cancelText
     container.innerHTML = `
         <div class="flex flex-col items-center p-6 text-center border-b border-gray-700">
             ${message ? `
-                <h3 class="text-xl font-bold text-white mb-2">${message}</h3>
+                <h3 class="text-xl font-bold text-white mb-2">${escapeHtml(message)}</h3>
                 <p class="text-gray-400 text-sm">Are you sure you want to delete this?</p>
             ` : ''}
         </div>
         <button id="confirm-btn" class="w-full p-4 text-red-500 font-bold hover:bg-white/5 transition-colors border-b border-gray-700 text-sm">
-            ${confirmText}
+            ${escapeHtml(confirmText)}
         </button>
         <button id="cancel-btn" class="w-full p-4 text-white hover:bg-white/5 transition-colors text-sm">
-            ${cancelText}
+            ${escapeHtml(cancelText)}
         </button>
     `;
 

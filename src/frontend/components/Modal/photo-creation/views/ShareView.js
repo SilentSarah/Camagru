@@ -14,6 +14,7 @@
  */
 
 import { user } from "../../../../js/Auth.js";
+import { escapeHtml } from "../../../../js/Utils.js";
 
 
 
@@ -34,10 +35,10 @@ export function createShareView({ imageDataUrl }) {
                     ${
                         user.profile_picture_url ? 
                         /*html*/`<img src="${user.profile_picture_url}" class="w-full h-full object-cover rounded-full">` :
-                        /*html*/`<div class="w-full h-full bg-gray-700 rounded-full text-white text-sm flex items-center justify-center">${user.username.charAt(0).toUpperCase()}</div>`
+                        /*html*/`<div class="w-full h-full bg-gray-700 rounded-full text-white text-sm flex items-center justify-center">${escapeHtml(user.username.charAt(0).toUpperCase())}</div>`
                     }
                     </div> 
-                    <span class="font-semibold text-sm">${user.username}</span>
+                    <span class="font-semibold text-sm">${escapeHtml(user.username)}</span>
             </div>
             <textarea id="caption-input" class="w-full h-40 bg-transparent text-white resize-none outline-none text-sm placeholder-gray-500" placeholder="Write a caption..."></textarea>
         </div>

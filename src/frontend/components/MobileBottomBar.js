@@ -35,7 +35,7 @@ export default function MobileBottomBar() {
         <div class="relative flex-1 flex justify-center items-center">
             <button id="profile_menu_toggle" class="p-2 rounded-lg hover:bg-gray-900 transition-colors">
                 <div class="w-6 h-6 rounded-full bg-gray-600 overflow-hidden">
-                    <img src="${user.profile_picture_url ?? `https://ui-avatars.com/api/?name=${user.username}`}"
+                    <img src="${user.profile_picture_url ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}`}"
                          alt="Profile"
                          class="w-full h-full object-cover">
                 </div>
