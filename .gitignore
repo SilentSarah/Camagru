@@ -4,3 +4,4 @@ db_data
 tailwindcss-linux-x64
 src/backend/static/temp/*
 src/backend/static/uploads/*
+.env

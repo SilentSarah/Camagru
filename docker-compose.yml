@@ -1,51 +1,55 @@
 services:
-  mariadb:
-    image: mariadb:latest
-    container_name: mariadb_container
-    environment:
-      MYSQL_ROOT_PASSWORD: ROOT
-      MYSQL_DATABASE: CAMAGRU
-      MYSQL_USER: ROOT
-      MYSQL_PASSWORD: ROOT
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+    container_name: camagru_frontend
+    env_file:
+      - .env
     ports:
-      - "3306:3306"
+      - "80:80"
     volumes:
-      - db_data:/var/lib/mysql
-    networks:
+      - uploads:/var/www/html/uploads:rw
+    depends_on:
       - backend
-  adminer:
-    image: adminer:latest
-    container_name: adminer_container
-    ports:
-      - "8080:8080"
     networks:
-      - backend
-  nginx-php:
-    image: trafex/php-nginx:latest
-    container_name: nginx_php_container
-    ports:
-      - "80:8001"
+      - app_network
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    container_name: camagru_backend
+    env_file:
+      - .env
     volumes:
-      - ./src:/var/www/html
+      - uploads:/var/www/html/uploads:rw
     depends_on:
       - mariadb
     networks:
-      - backend
+      - app_network
+
+  # Database: MariaDB
+  mariadb:
+    image: mariadb:latest
+    container_name: camagru_mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./docker/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - app_network
 
 volumes:
   db_data:
     driver: local
-    driver_opts:
-      type: none
-      device: ./db_data
-      o: bind
-  mail:
+  uploads:
     driver: local
-    driver_opts:
-      type: none
-      device: ./mail
-      o: bind
 
 networks:
-  backend:
+  app_network:
     driver: bridge
