@@ -15,6 +15,7 @@
 
 
 window.env = {
-    APP_URL: 'http://localhost:8000/',
+    APP_URL: 'http://localhost/api',
+    UPLOADS_URL: 'http://localhost/uploads',
     PHOTOS_PER_PAGE: 6
 };

@@ -9,19 +9,36 @@
  *  ░  ░  ░    ░   ▒     ░░   ░   ░   ▒    ░  ░░ ░
  * ░        ░  ░   ░           ░  ░ ░  ░  ░
  *                                       
- * File Created: Wednesday, 19th November 2025 3:09:21 pm
+ * File Created: Wednesday, 7th January 2026 6:35:00 pm
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
-import Router from './js/Router.js';
-import routerHistory from './js/RouterHistory.js';
+class RouterHistory {
 
-document.addEventListener('DOMContentLoaded', async () => {    
-    window.onpopstate = async (e) => {
-        if (e.state)
-            routerHistory.set(e.state.index);
-        await Router();
-    };
-    window.onpageshow = async (e) => e.persisted && await Router();
-    await Router();
-});
+    constructor() {
+        if (RouterHistory.instance)
+            return RouterHistory.instance;
+
+        this.index = 0;
+        RouterHistory.instance = this;
+    }
+
+    increment() {
+        this.index++;
+    }
+
+    decrement() {
+        this.index--;
+    }
+
+    set(index) {
+        this.index = index;
+    }
+
+    get() {
+        return this.index;
+    }
+}
+
+const routerHistory = new RouterHistory();
+export default routerHistory;

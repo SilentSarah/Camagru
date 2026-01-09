@@ -28,6 +28,8 @@ import PostPage from '../pages/PostPage.js';
 import { useUser, user } from './Auth.js';
 import Sidebar from '../components/Sidebar.js';
 import MobileBottomBar from '../components/MobileBottomBar.js';
+import routerHistory from './RouterHistory.js';
+import { stopAllMediaStreams } from './Utils.js';
 
 export const routes = [
     {
@@ -99,6 +101,12 @@ export const routes = [
 ]
 
 /**
+ * Used to determine whether the user is in the first page after load or not
+ * @type {number}
+ */
+export let pageIdx = 0;
+
+/**
  * @type {IntersectionObserver}
  */
 let observer = null;
@@ -109,20 +117,31 @@ let observer = null;
 export let abortController = null;
 
 export function InjectAnchors(anchor) {
+    const state = {
+        index: routerHistory.get() + 1,
+    }
+    
+    const isExternalLink = (a) => {
+        const href = a.getAttribute('href') || '';
+        return a.target === '_blank' || href.startsWith('http') || href.startsWith('//');
+    };
+    
     if (anchor) {
-        anchor.onclick = (event) => {
+        if (isExternalLink(anchor)) return;
+        anchor.onclick = async (event) => {
             event.preventDefault();
-            history.pushState(null, '', anchor.getAttribute('href'));
-            Router();
+            history.pushState(state, '', anchor.getAttribute('href'));
+            await Router();
         }
-        return ;
+        return;
     }
     const anchors = document.querySelectorAll('a');
     anchors.forEach(anchor => {
-        anchor.onclick = (event) => {
+        if (isExternalLink(anchor)) return;
+        anchor.onclick = async (event) => {
             event.preventDefault();
-            history.pushState(null, '', anchor.getAttribute('href'));
-            Router();
+            history.pushState(state, '', anchor.getAttribute('href'));
+            await Router();
         }
     });
 }
@@ -156,24 +175,27 @@ function createAbortController() {
 
 
 async function Router() {
-    const parentComp = document.body;
+    const appRoot = document.body.querySelector('#app-root');
     let route = routes.find(r => r.path === window.location.pathname) ?? routes[routes.length - 1];
 
+    stopAllMediaStreams();
     destroyAbortController();
     createAbortController();
-    parentComp.innerHTML = '';
+    
+    appRoot.innerHTML = '';
 
     destroyObserver();
     initObserver();
     if (await useUser(route)) {
-        parentComp.appendChild(Sidebar());
-        parentComp.appendChild(MobileBottomBar());
+        appRoot.appendChild(Sidebar());
+        appRoot.appendChild(MobileBottomBar());
     } else if (route.protected) {
         route = routes.at(0);
     }
     
-    parentComp.appendChild(await route.component());
+    appRoot.appendChild(await route.component());
     document.title = "Camagru | " + route.title;
+    routerHistory.set(routerHistory.get() + 1);
 }
 
 export default Router
