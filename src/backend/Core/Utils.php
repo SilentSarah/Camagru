@@ -23,7 +23,7 @@ function isSecure()
 
 function gen_server_url()
 {
-    return (isSecure() ? "https" : "http") . "://" . Config::APP_URL;
+    return (isSecure() ? "https" : "http") . "://" . Config::APP_URL();
 }
 
 
@@ -138,11 +138,11 @@ class ImageHelpers
             $stickerImg = new Imagick();
             $stickerBlob = base64_decode($sticker["image"]);
             $stickerImg->readImageBlob($stickerBlob);
-            $finalW = $image->getImageWidth() * $scale;
+            $finalW = (int)($image->getImageWidth() * $scale);
             $stickerImg->scaleImage($finalW, 0);
             $finalH = $stickerImg->getImageHeight();
-            $posX = ($x * $image->getImageWidth()) - ($finalW / 2);
-            $posY = ($y * $image->getImageHeight()) - ($finalH / 2);
+            $posX = (int)(($x * $image->getImageWidth()) - ($finalW / 2));
+            $posY = (int)(($y * $image->getImageHeight()) - ($finalH / 2));
 
             $image->compositeImage($stickerImg, Imagick::COMPOSITE_OVER, $posX, $posY);
             $stickerImg->clear();

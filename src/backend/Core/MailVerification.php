@@ -31,13 +31,13 @@ function sendVerifcationMail(User $user)
     $user->setVerificationTokenGenDate($v_gen_time);
     $user->save();
 
-    $vlink = Config::FRONTEND_URL . "/verify?token=" . $user->getVerificationToken();
+    $vlink = Config::FRONTEND_URL() . "/verify?token=" . $user->getVerificationToken();
 
-    $request = new Request(Config::MAILGUN_API_URL . Config::MAILGUN_SENDER_DOMAIN . "/messages", "POST");
+    $request = new Request(Config::MAILGUN_API_URL() . Config::MAILGUN_SENDER_DOMAIN() . "/messages", "POST");
     $request->includeHeader("Content-Type", "application/json");
-    $request->setCurlOption(CURLOPT_USERPWD, Config::MAILGUN_USER . ":" . Config::MAILGUN_API_KEY);
+    $request->setCurlOption(CURLOPT_USERPWD, Config::MAILGUN_USER() . ":" . Config::MAILGUN_API_KEY());
     $request->setBody([
-        "from" => Config::MAILGUN_SENDER_FROM,
+        "from" => Config::MAILGUN_SENDER_FROM(),
         "to" => $user->getEmail(),
         "subject" => "Camagru - Verify your email address",
         "html" => sprintf(Config::$VERIFICATION_EMAIL, $vlink, $vlink, $vlink)
@@ -53,13 +53,13 @@ function sendPasswordRecoveryEmail(User $user)
     $user->setResetTokenExpires($r_expires);
     $user->save();
 
-    $rlink = Config::FRONTEND_URL . "/reset-password?token=" . $user->getResetToken();
+    $rlink = Config::FRONTEND_URL() . "/reset-password?token=" . $user->getResetToken();
 
-    $request = new Request(Config::MAILGUN_API_URL . Config::MAILGUN_SENDER_DOMAIN . "/messages", "POST");
+    $request = new Request(Config::MAILGUN_API_URL() . Config::MAILGUN_SENDER_DOMAIN() . "/messages", "POST");
     $request->includeHeader("Content-Type", "application/json");
-    $request->setCurlOption(CURLOPT_USERPWD, Config::MAILGUN_USER . ":" . Config::MAILGUN_API_KEY);
+    $request->setCurlOption(CURLOPT_USERPWD, Config::MAILGUN_USER() . ":" . Config::MAILGUN_API_KEY());
     $request->setBody([
-        "from" => Config::MAILGUN_SENDER_FROM,
+        "from" => Config::MAILGUN_SENDER_FROM(),
         "to" => $user->getEmail(),
         "subject" => "Camagru - Reset your password",
         "html" => sprintf(Config::$RESET_PASSWORD_EMAIL, $rlink, $rlink, $rlink)

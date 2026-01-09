@@ -16,15 +16,17 @@
 
 require_once __DIR__ . '/Config.php';
 
-class Database {
+class Database
+{
     private static $instance = null;
-    private function __construct()  {}
-    public static function getInstance() {
+    private function __construct() {}
+    public static function getInstance()
+    {
         if (self::$instance === null) {
-            $host = Config::DB_HOST;
-            $dbname = Config::DB_NAME;
-            $username = Config::DB_USER;
-            $password = Config::DB_PASS;
+            $host = Config::DB_HOST();
+            $dbname = Config::DB_NAME();
+            $username = Config::DB_USER();
+            $password = Config::DB_PASS();
             $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
             try {
                 self::$instance = new PDO($dsn, $username, $password);

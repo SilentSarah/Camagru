@@ -70,7 +70,7 @@ function generate_jwt_token(string $algo, array $claims): string
 
     $token = $header64URL . "." . $payload64URL;
 
-    $signature = hash_hmac(ALGOS[$algo], $token, Config::JWT_SECRET, true);
+    $signature = hash_hmac(ALGOS[$algo], $token, Config::JWT_SECRET(), true);
     $signature64URL = convert_b64_to_b64url(base64_encode($signature));
 
     return $token . "." . $signature64URL;
@@ -98,7 +98,7 @@ function verify_jwt_token(string $token): bool
     $payload = convert_b64url_to_b64($payload64URL);
     $payload = json_decode(base64_decode($payload), true);
 
-    $expectedSignature = hash_hmac(ALGOS[$algo], $signingInput, Config::JWT_SECRET, true);
+    $expectedSignature = hash_hmac(ALGOS[$algo], $signingInput, Config::JWT_SECRET(), true);
     $expectedSignature64URL = convert_b64_to_b64url(base64_encode($expectedSignature));
 
     if ($payload["exp"] < time()) {

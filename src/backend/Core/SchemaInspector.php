@@ -16,10 +16,12 @@
 
 require_once __DIR__ . '/Database.php';
 
-class SchemaInspector {
+class SchemaInspector
+{
     private PDO $pdo;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->pdo = Database::getInstance();
     }
 
@@ -27,8 +29,9 @@ class SchemaInspector {
      * Get all tables in the database
      * @return array
      */
-    public function getAllTables(): array {
-        $dbName = Config::DB_NAME;
+    public function getAllTables(): array
+    {
+        $dbName = Config::DB_NAME();
         $stmt = $this->pdo->query("
             SELECT TABLE_NAME 
             FROM INFORMATION_SCHEMA.TABLES 
@@ -43,8 +46,9 @@ class SchemaInspector {
      * @param string $tableName
      * @return array
      */
-    public function getTableSchema(string $tableName): array {
-        $dbName = Config::DB_NAME;
+    public function getTableSchema(string $tableName): array
+    {
+        $dbName = Config::DB_NAME();
         $stmt = $this->pdo->prepare("
             SELECT 
                 COLUMN_NAME as name,
@@ -67,7 +71,8 @@ class SchemaInspector {
      * @param string $tableName
      * @return bool
      */
-    public function tableExists(string $tableName): bool {
+    public function tableExists(string $tableName): bool
+    {
         $tables = $this->getAllTables();
         return in_array($tableName, $tables);
     }
@@ -77,8 +82,9 @@ class SchemaInspector {
      * @param string $tableName
      * @return array
      */
-    public function getForeignKeys(string $tableName): array {
-        $dbName = Config::DB_NAME;
+    public function getForeignKeys(string $tableName): array
+    {
+        $dbName = Config::DB_NAME();
         $stmt = $this->pdo->prepare("
             SELECT 
                 COLUMN_NAME as column_name,

@@ -42,7 +42,7 @@ class NotificationMailer
             return;
         }
 
-        $postLink = Config::FRONTEND_URL . "/post?id=" . $photo->getId();
+        $postLink = Config::FRONTEND_URL() . "/post?id=" . $photo->getId();
         $title = "Someone liked your post!";
         $action = "liked your post.";
         $commentSection = "";
@@ -77,7 +77,7 @@ class NotificationMailer
             return;
         }
 
-        $postLink = Config::FRONTEND_URL . "/post?id=" . $photo->getId();
+        $postLink = Config::FRONTEND_URL() . "/post?id=" . $photo->getId();
         $title = "New comment on your post!";
         $action = "commented on your post:";
 
@@ -107,11 +107,11 @@ class NotificationMailer
         string $commentSection,
         string $postLink
     ): void {
-        $request = new Request(Config::MAILGUN_API_URL . Config::MAILGUN_SENDER_DOMAIN . "/messages", "POST");
+        $request = new Request(Config::MAILGUN_API_URL() . Config::MAILGUN_SENDER_DOMAIN() . "/messages", "POST");
         $request->includeHeader("Content-Type", "application/json");
-        $request->setCurlOption(CURLOPT_USERPWD, Config::MAILGUN_USER . ":" . Config::MAILGUN_API_KEY);
+        $request->setCurlOption(CURLOPT_USERPWD, Config::MAILGUN_USER() . ":" . Config::MAILGUN_API_KEY());
         $request->setBody([
-            "from" => Config::MAILGUN_SENDER_FROM,
+            "from" => Config::MAILGUN_SENDER_FROM(),
             "to" => $toEmail,
             "subject" => $subject,
             "html" => sprintf(

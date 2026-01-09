@@ -31,32 +31,73 @@
  */
 class Config
 {
-    public const DB_HOST = 'localhost';
-    public const DB_NAME = 'db';
-    public const DB_USER = 'root';
-    public const DB_PASS = 'root';
+    // Database - reads from Docker env vars with fallbacks
+    public static function DB_HOST(): string
+    {
+        return getenv('DB_HOST') ?: 'localhost';
+    }
+    public static function DB_NAME(): string
+    {
+        return getenv('DB_NAME') ?: 'CAMAGRU';
+    }
+    public static function DB_USER(): string
+    {
+        return getenv('DB_USER') ?: 'root';
+    }
+    public static function DB_PASS(): string
+    {
+        return getenv('DB_PASSWORD') ?: 'root';
+    }
 
-    public const ALLOWED_ORIGINS = [
-        'http://localhost:3000',
-    ];
-    public const ALLOWED_METHODS = [
-        'GET',
-        'POST',
-        'PUT',
-        'DELETE',
-        'OPTIONS'
-    ];
-
-    public const ALLOWED_HEADERS = []; // You'll need this to allow the client to see Retry-After header (CORS STUFF)
+    // CORS
+    public static function ALLOWED_ORIGINS(): array
+    {
+        $origins = getenv('ALLOWED_ORIGINS');
+        return $origins ? explode(',', $origins) : ['http://localhost'];
+    }
+    public const ALLOWED_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'];
+    public const ALLOWED_HEADERS = [];
     public const ALLOW_CREDENTIALS = true;
-    public const JWT_SECRET = 'your-secret-key';
-    public const MAILGUN_USER = "your_api_user";
-    public const MAILGUN_API_KEY = "your_api_key";
-    public const MAILGUN_SENDER_DOMAIN = "your_sender_domain";
-    public const MAILGUN_SENDER_FROM = "your_sender_from";
-    public const MAILGUN_API_URL = "your_api_url";
+
+    // App URL (used for generating server URLs)
+    public static function APP_URL(): string
+    {
+        return getenv('APP_URL') ?: 'localhost';
+    }
+
+    // Auth
+    public static function JWT_SECRET(): string
+    {
+        return getenv('JWT_SECRET') ?: 'your-secret-key-change-me';
+    }
+
+    // Mailgun
+    public static function MAILGUN_USER(): string
+    {
+        return getenv('MAILGUN_USER') ?: 'api';
+    }
+    public static function MAILGUN_API_KEY(): string
+    {
+        return getenv('MAILGUN_API_KEY') ?: '';
+    }
+    public static function MAILGUN_SENDER_DOMAIN(): string
+    {
+        return getenv('MAILGUN_SENDER_DOMAIN') ?: '';
+    }
+    public static function MAILGUN_SENDER_FROM(): string
+    {
+        return getenv('MAILGUN_SENDER_FROM') ?: '';
+    }
+    public static function MAILGUN_API_URL(): string
+    {
+        return getenv('MAILGUN_API_URL') ?: '';
+    }
+
     public const VERIFICATION_EXPIRY_TIME = 900;
-    public const FRONTEND_URL = "your_frontend_url";
+    public static function FRONTEND_URL(): string
+    {
+        return getenv('FRONTEND_URL') ?: 'http://localhost';
+    }
 
     public const ALLOWED_MIME_TYPES = [
         'image/jpeg',
@@ -69,10 +110,8 @@ class Config
     public const MIN_DIMENSION = 100;
     public const MAX_DIMENSION = 4096;
     public const MAX_DESCRIPTION_LENGTH = 128;
-
-    // Upload directories
-    public const UPLOAD_DIR = __DIR__ . '/../static/uploads/';
-    public const TEMP_DIR = __DIR__ . '/../static/temp/';
+    public const UPLOAD_DIR = '/var/www/html/uploads/';
+    public const TEMP_DIR = '/var/www/html/uploads/temp/';
 
     public const SUPPORTED_IMAGE_MIME_TYPES = [
         'image/jpeg',
