@@ -27,7 +27,7 @@ class CommentController
 
         try {
             $comment = new Comment();
-            $commentContent = htmlspecialchars(trim($data['content']));
+            $commentContent = filter_var(trim($data['content']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $commentData = [
                 'photo_id' => $data['photo_id'],
                 'user_id' => $_SESSION['user'],

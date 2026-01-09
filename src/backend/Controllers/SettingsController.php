@@ -35,8 +35,8 @@ class SettingsController
                 return;
             }
             $errors = $validator->validateField('username', $data);
-            $data['username'] = htmlspecialchars($data['username'], ENT_QUOTES, 'UTF-8');
-            $user->setUsername($data['username']);
+            $data['username'] = trim($data['username']);
+            $user->setUsername(filter_var($data['username'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             $edited_data['username'] = $data['username'];
         }
 
@@ -49,15 +49,15 @@ class SettingsController
                 return;
             }
             $errors = $validator->validateField('email', $data);
-            $data['email'] = filter_var($data['email'], FILTER_SANITIZE_EMAIL);
-            $user->setEmail($data['email']);
+            $data['email'] = trim($data['email']);
+            $user->setEmail(filter_var($data['email'], FILTER_SANITIZE_EMAIL));
             $edited_data['email'] = $data['email'];
         }
 
         if (!empty($data['fullname']) && $data['fullname'] !== $user->getFullname()) {
             $errors = $validator->validateField('fullname', $data);
-            $data['fullname'] = htmlspecialchars($data['fullname'], ENT_QUOTES, 'UTF-8');
-            $user->setFullname($data['fullname']);
+            $data['fullname'] = trim($data['fullname']);
+            $user->setFullname(filter_var($data['fullname'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             $edited_data['fullname'] = $data['fullname'];
         }
 
@@ -67,8 +67,8 @@ class SettingsController
                 $response->sendJson();
                 return;
             }
-            $data['bio'] = htmlspecialchars($data['bio'], ENT_QUOTES, 'UTF-8');
-            $user->setBio($data['bio']);
+            $data['bio'] = trim($data['bio']);
+            $user->setBio(filter_var($data['bio'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             $edited_data['bio'] = $data['bio'];
         }
 

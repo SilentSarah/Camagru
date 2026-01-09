@@ -112,10 +112,10 @@ class AuthController
             $user = new User();
             $password_hashed = password_hash($_POST["password"], PASSWORD_BCRYPT);
             $user->create([
-                "username" => $_POST["username"],
+                "username" => filter_var($_POST["username"], FILTER_SANITIZE_FULL_SPECIAL_CHARS),
                 "password" => $password_hashed,
-                "fullname" => $_POST["fullname"],
-                "email" => $_POST["email"],
+                "fullname" => filter_var($_POST["fullname"], FILTER_SANITIZE_FULL_SPECIAL_CHARS),
+                "email" => filter_var($_POST["email"], FILTER_SANITIZE_EMAIL),
                 "is_verified" => 0,
             ]);
             sendVerifcationMail($user);
@@ -248,10 +248,10 @@ class AuthController
             }
             $data = [
                 "id" => $user->getId(),
-                "fullname" => $user->getFullname(),
-                "username" => $user->getUsername(),
-                "email" => $user->getEmail(),
-                "bio" => $user->getBio(),
+                "fullname" => filter_var($user->getFullname(), FILTER_SANITIZE_FULL_SPECIAL_CHARS),
+                "username" => filter_var($user->getUsername(), FILTER_SANITIZE_FULL_SPECIAL_CHARS),
+                "email" => filter_var($user->getEmail(), FILTER_SANITIZE_EMAIL),
+                "bio" => filter_var($user->getBio(), FILTER_SANITIZE_FULL_SPECIAL_CHARS),
                 "is_verified" => $user->isVerified(),
                 "email_notifications" => $user->getEmailNotifications(),
                 "profile_pic_url" => $user->getProfilePicUrl() ?? null,
@@ -270,20 +270,30 @@ class AuthController
     {
         $query = isset($_GET['q']) ? trim($_GET['q']) : '';
 
-        if (strlen($query) < 2) {
+        if (strlen($query) < 2 || trim($query) === '') {
             $response = new HttpResponse(200, "OK", ["users" => []]);
             $response->sendJson();
             return;
         }
 
-        $query = htmlspecialchars($query, ENT_QUOTES, 'UTF-8');
+        $query = htmlspecialchars($query);
 
         try {
-            $db = Database::getInstance();
-            $stmt = $db->prepare("SELECT id, username, fullname, profile_pic_url FROM users WHERE username LIKE :query OR fullname LIKE :query LIMIT 20");
-            $searchTerm = '%' . $query . '%';
-            $stmt->execute(['query' => $searchTerm]);
-            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $user = new User();
+            $users = $user->findAll([
+                "OR" => [
+                    ['username' => ['contains' => $query]],
+                    ['fullname' => ['contains' => $query]],
+                ]
+            ], [], 20);
+
+            $users = array_map(function ($user) {
+                $user["username"] = filter_var($user["username"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $user["fullname"] = filter_var($user["fullname"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $user["bio"] = filter_var($user["bio"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $user["email"] = filter_var($user["email"], FILTER_SANITIZE_EMAIL);
+                return $user;
+            }, $users);
 
             $response = new HttpResponse(200, "OK", ["users" => $users]);
             $response->sendJson();
@@ -314,9 +324,9 @@ class AuthController
 
             $data = [
                 "id" => $user->getId(),
-                "fullname" => $user->getFullname(),
-                "username" => $user->getUsername(),
-                "bio" => $user->getBio(),
+                "fullname" => filter_var($user->getFullname(), FILTER_SANITIZE_FULL_SPECIAL_CHARS),
+                "username" => filter_var($user->getUsername(), FILTER_SANITIZE_FULL_SPECIAL_CHARS),
+                "bio" => filter_var($user->getBio(), FILTER_SANITIZE_FULL_SPECIAL_CHARS),
                 "profile_pic_url" => $user->getProfilePicUrl() ?? null,
             ];
 

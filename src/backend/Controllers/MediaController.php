@@ -39,7 +39,7 @@ class MediaController
         ], ["id" => "DESC"], $limit, $cursor);
 
         $enrichedPhotos = array_map(function ($photo) {
-            $photo["image_url"] = gen_server_url() . "/uploads?image=" . $photo["id"];
+            $photo["image_url"] = gen_server_url() . "/uploads/" . $photo["file_name"];
 
             $userModel = new User();
             $author = $userModel->find($photo["user_id"]);
@@ -105,35 +105,12 @@ class MediaController
     {
         $cursor = $_GET["cursor"] ?? 0;
         $limit = $_GET["limit"] ?? 10;
-        $currentUserId = $_SESSION["user"] ?? null;
 
         $photoModel = new Photo();
-
-        $photos = [];
-        if ($currentUserId) {
-            $photos = $photoModel->findAllExcluding(
-                ["user_id" => $currentUserId],
-                ["id" => "DESC"],
-                $limit,
-                $cursor
-            );
-        }
-
-        if (count($photos) < $limit) {
-            $remaining = $limit - count($photos);
-            $allPhotos = $photoModel->findAll([], ["id" => "DESC"], $remaining, $cursor + count($photos));
-
-            $existingIds = array_column($photos, 'id');
-            foreach ($allPhotos as $photo) {
-                if (!in_array($photo['id'], $existingIds)) {
-                    $photos[] = $photo;
-                    if (count($photos) >= $limit) break;
-                }
-            }
-        }
+        $photos = $photoModel->findAll([], ["id" => "DESC"], $limit, $cursor);
 
         $enrichedPhotos = array_map(function ($photo) {
-            $photo["image_url"] = gen_server_url() . "/uploads?image=" . $photo["id"];
+            $photo["image_url"] = gen_server_url() . "/uploads/" . $photo["file_name"];
 
             $userModel = new User();
             $author = $userModel->find($photo["user_id"]);
@@ -152,8 +129,8 @@ class MediaController
             $photo["likes"] = count($likes);
             $photo["is_liked_by_user"] = false;
             if (isset($_SESSION["user"])) {
-                foreach ($likes as $like) {
-                    if ($like["user_id"] == $_SESSION["user"]) {
+                foreach ($likes as $likeObj) {
+                    if ($likeObj["user_id"] == $_SESSION["user"]) {
                         $photo["is_liked_by_user"] = true;
                         break;
                     }
@@ -245,7 +222,7 @@ class MediaController
         }
         $photo["comments"] = $enrichedComments;
         $photo["comments_count"] = count($comments);
-        $photo["image_url"] = gen_server_url() . "/uploads?image=" . $photo["id"];
+        $photo["image_url"] = gen_server_url() . "/uploads/" . $photo["file_name"];
 
         $response = new HttpResponse(200, "OK", ["message" => "success", "data" => $photo]);
         $response->sendJson();
@@ -255,8 +232,6 @@ class MediaController
     public function render_photo()
     {
         $image_id = $_GET["image"] ?? null;
-        $profile_image_id = $_GET["pimage"] ?? null;
-
         try {
             if (empty($image_id) && empty($profile_image_id)) {
                 $response = new HttpResponse(400, "Bad Request", ["message" => "Missing image parameter"]);
@@ -270,7 +245,7 @@ class MediaController
                 return;
             }
 
-            $filename = !empty($image_id) ? $image_id : $profile_image_id;
+            $filename = !empty($image_id);
 
             if (strpos($filename, '..') !== false || strpos($filename, '/') !== false) {
                 $response = new HttpResponse(400, "Bad Request", ["message" => "Invalid filename"]);
@@ -344,7 +319,6 @@ class MediaController
             if (gettype($image) == "object") {
                 $image->clear();
             }
-            log_stuff($e->getMessage());
             $response = new HttpResponse(400, "Bad Request", ["message" => "Invalid image"]);
             $response->sendJson();
         }
@@ -405,7 +379,7 @@ class MediaController
             $photo = new Photo();
             $photo->create([
                 "user_id" => $_SESSION["user"],
-                "description" => $description,
+                "description" => filter_var(trim($description), FILTER_SANITIZE_FULL_SPECIAL_CHARS),
                 "file_name" => $file_name . "." . $ext,
             ]);
             $response = new HttpResponse(201, "Created", ["message" => "success"]);
@@ -503,14 +477,14 @@ class MediaController
 
             $user = new User();
             $user->find($_SESSION["user"]);
-            $user->setProfilePicUrl(gen_server_url() . "/uploads?pimage=" . $file_name . "." . $ext);
+            $user->setProfilePicUrl(gen_server_url() . "/uploads/" . $file_name . "." . $ext);
             $user->save();
 
             log_stuff($user->getProfilePicUrl());
 
             $response = new HttpResponse(200, "OK", [
                 "message" => "Profile picture updated",
-                "profile_pic_url" => gen_server_url() . "/uploads?pimage=" . $file_name . "." . $ext
+                "profile_pic_url" => gen_server_url() . "/uploads/" . $file_name . "." . $ext
             ]);
             $response->sendJson();
         } catch (Exception $e) {
