@@ -13,10 +13,11 @@
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
-import { getCookie, goTo } from '../js/Utils.js';
+import { getCookie, goTo, escapeHtml } from '../js/Utils.js';
 import FetchCSRF from '../js/Csrf.js';
 import { showToast } from './Toast.js';
 import apiFetch from '../js/ApiClient.js';
+import ShareDropdown, { generateShareLinks } from './post-modal/ShareDropdown.js';
 
 /**
  * Format relative time
@@ -46,7 +47,7 @@ export default function Post({ photo, onLikeUpdate }) {
     const user = photo.user || { username: 'Unknown', profile_picture_url: null };
     const avatar = user.profile_picture_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=random`;
     const time = formatRelativeTime(photo.created_at);
-    const imageUrl = `${window.env.APP_URL}index.php/uploads?image=${photo.file_name}`;
+    const imageUrl = `${window.env.UPLOADS_URL}/${photo.file_name}`;
     
     let isLiked = photo.is_liked_by_user || false;
     let likesCount = photo.likes || 0;
@@ -60,10 +61,10 @@ export default function Post({ photo, onLikeUpdate }) {
         <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-3">
                 <a href="/profile?user_id=${user.id}" class="rounded-full border border-gray-800 overflow-hidden w-8 h-8 hover:opacity-80 transition-opacity">
-                    <img src="${avatar}" alt="${user.username}" class="w-full h-full object-cover">
+                    <img src="${avatar}" alt="${escapeHtml(user.username)}" class="w-full h-full object-cover">
                 </a>
                 <div class="flex items-center gap-2">
-                    <a href="/profile?user_id=${user.id}" class="font-bold text-sm hover:underline">${user.username}</a>
+                    <a href="/profile?user_id=${user.id}" class="font-bold text-sm hover:underline">${escapeHtml(user.username)}</a>
                     <span class="text-gray-500 text-sm">• ${time}</span>
                 </div>
             </div>
@@ -71,7 +72,7 @@ export default function Post({ photo, onLikeUpdate }) {
 
         <!-- Content (Image) -->
         <div class="rounded-sm overflow-hidden border border-gray-800 mb-3 bg-gray-900 flex items-center justify-center aspect-[4/5] cursor-pointer post-image-container">
-            <img src="${imageUrl}" alt="Post by ${user.username}" class="w-full h-full object-cover">
+            <img src="${imageUrl}" alt="Post by ${escapeHtml(user.username)}" class="w-full h-full object-cover">
         </div>
 
         <!-- Actions -->
@@ -83,9 +84,11 @@ export default function Post({ photo, onLikeUpdate }) {
                 <button class="comment-btn hover:text-gray-400 transition-colors">
                     <i class="fa-regular fa-comment text-2xl"></i>
                 </button>
-                <button class="share-btn hover:text-gray-400 transition-colors">
-                    <i class="fa-regular fa-paper-plane text-2xl"></i>
-                </button>
+                <div class="relative share-container">
+                    <button class="share-btn hover:text-gray-400 transition-colors">
+                        <i class="fa-regular fa-paper-plane text-2xl"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -95,8 +98,8 @@ export default function Post({ photo, onLikeUpdate }) {
         <!-- Caption -->
         ${photo.description ? `
         <div class="text-sm mb-2">
-            <a href="/profile?user_id=${user.id}" class="font-bold mr-2 hover:underline">${user.username}</a>
-            <span class="text-gray-100">${photo.description}</span>
+            <a href="/profile?user_id=${user.id}" class="font-bold mr-2 hover:underline">${escapeHtml(user.username)}</a>
+            <span class="text-gray-100">${escapeHtml(photo.description)}</span>
         </div>
         ` : ''}
 
@@ -128,7 +131,7 @@ export default function Post({ photo, onLikeUpdate }) {
         likesCountEl.textContent = `${likesCount.toLocaleString()} likes`;
 
         try {
-            const response = await apiFetch(`${window.env.APP_URL}index.php/toggle-like`, {
+            const response = await apiFetch(`${window.env.APP_URL}/toggle-like`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -176,16 +179,42 @@ export default function Post({ photo, onLikeUpdate }) {
     likeBtn.onclick = toggleLike;
     if (commentBtn) commentBtn.onclick = openPost;
     if (viewCommentsBtn) viewCommentsBtn.onclick = openPost;
-    if (shareBtn) {
-        shareBtn.onclick = async () => {
-            const postUrl = `${window.location.origin}/post?id=${photo.id}`;
-            try {
-                await navigator.clipboard.writeText(postUrl);
-                showToast('Link copied!', 'success');
-            } catch (e) {
-                showToast('Failed to copy link', 'error');
-            }
+    
+    const shareContainer = div.querySelector('.share-container');
+    if (shareBtn && shareContainer) {
+        const shareLinks = generateShareLinks({
+            postId: photo.id,
+            userId: user.id,
+            description: photo.description,
+            imagePath: imageUrl
+        });
+        
+        shareContainer.insertAdjacentHTML('beforeend', ShareDropdown({ shareLinks, hidden: true }));
+        const shareDropdown = shareContainer.querySelector('#share-dropdown');
+        const copyLinkBtn = shareContainer.querySelector('#copy-link-btn');
+        
+        shareBtn.onclick = (e) => {
+            e.stopPropagation();
+            shareDropdown.classList.toggle('hidden');
         };
+        
+        document.addEventListener('click', (e) => {
+            if (!shareBtn.contains(e.target) && !shareDropdown.contains(e.target)) {
+                shareDropdown.classList.add('hidden');
+            }
+        });
+        
+        if (copyLinkBtn) {
+            copyLinkBtn.onclick = async () => {
+                try {
+                    await navigator.clipboard.writeText(shareLinks.postUrl);
+                    showToast('Link copied!', 'success');
+                    shareDropdown.classList.add('hidden');
+                } catch (e) {
+                    showToast('Failed to copy link', 'error');
+                }
+            };
+        }
     }
 
     return div;

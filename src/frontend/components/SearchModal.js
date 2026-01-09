@@ -15,7 +15,7 @@
 
 import apiFetch from '../js/ApiClient.js';
 import { abortController } from '../js/Router.js';
-import { getCookie, goTo } from '../js/Utils.js';
+import { getCookie, goTo, escapeHtml } from '../js/Utils.js';
 
 let searchDrawer = null;
 let escHandler = null;
@@ -197,7 +197,7 @@ async function searchUsers(query) {
     
     try {
         const token = getCookie('session_token');
-        const response = await apiFetch(`${window.env.APP_URL}index.php/search-users?q=${encodeURIComponent(query)}`, {
+        const response = await apiFetch(`${window.env.APP_URL}/search-users?q=${encodeURIComponent(query)}`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -212,11 +212,11 @@ async function searchUsers(query) {
             resultsContainer.innerHTML = data.users.map(user => `
                 <a href="/profile?user_id=${user.id}" class="user-result flex items-center gap-3 p-3 rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer" data-user-id="${user.id}">
                     <div class="w-12 h-12 rounded-full overflow-hidden bg-gray-700 shrink-0">
-                        <img src="${user.profile_pic_url || `https://ui-avatars.com/api/?name=${user.username}`}" alt="${user.username}" class="w-full h-full object-cover">
+                        <img src="${user.profile_pic_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}`}" alt="${escapeHtml(user.username)}" class="w-full h-full object-cover">
                     </div>
                     <div class="flex-1 min-w-0">
-                        <div class="font-semibold text-white truncate">${user.username}</div>
-                        <div class="text-sm text-gray-400 truncate">${user.fullname || ''}</div>
+                        <div class="font-semibold text-white truncate">${escapeHtml(user.username)}</div>
+                        <div class="text-sm text-gray-400 truncate">${escapeHtml(user.fullname || '')}</div>
                     </div>
                 </a>
             `).join('');
@@ -232,7 +232,7 @@ async function searchUsers(query) {
         } else {
             resultsContainer.innerHTML = `
                 <div class="text-center text-gray-500 py-8">
-                    No users found for "${query}"
+                    No users found for "${escapeHtml(query)}"
                 </div>
             `;
         }

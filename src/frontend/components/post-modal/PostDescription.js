@@ -14,6 +14,7 @@
  */
 
 import User from "../../js/User.js";
+import { escapeHtml } from "../../js/Utils.js";
 
 /**
  * PostDescription - Displays the post description with author info
@@ -41,12 +42,12 @@ export default function PostDescription({ user, description, createdAt }) {
     return /*html*/`
         <div class="flex gap-3 w-full" id="post-description">
             <a href="/profile?user_id=${user?.id}" class="hover:opacity-80 transition-opacity shrink-0">
-                <img src="${avatar}" alt="${username}" class="size-8 rounded-full object-cover">
+                <img src="${avatar}" alt="${escapeHtml(username)}" class="size-8 rounded-full object-cover">
             </a>
             <div>
                 <p class="text-sm">
-                    <a href="/profile?user_id=${user?.id}" class="font-semibold text-white mr-1 hover:underline">${username}</a>
-                    <span class="text-gray-300">${description}</span>
+                    <a href="/profile?user_id=${user?.id}" class="font-semibold text-white mr-1 hover:underline">${escapeHtml(username)}</a>
+                    <span class="text-gray-300">${escapeHtml(description)}</span>
                 </p>
                 <p class="text-gray-400 text-xs mt-1">${formattedDate}</p>
             </div>

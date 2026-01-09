@@ -13,6 +13,8 @@
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
+import { escapeHtml } from "../../js/Utils.js";
+
 /**
  * PostAuthorHeader - Displays the post author information header
  * @param {Object} props - Component props
@@ -48,10 +50,10 @@ export default function PostAuthorHeader({ user, createdAt, isAuthor, onDelete }
     return /*html*/`
         <div class="flex items-center gap-3 w-full mb-3" id="post-author-header">
             <a href="/profile?user_id=${user?.id}" class="hover:opacity-80 transition-opacity">
-                <img src="${avatar}" alt="${username}" class="size-8 rounded-full object-cover">
+                <img src="${avatar}" alt="${escapeHtml(username)}" class="size-8 rounded-full object-cover">
             </a>
             <div class="flex-1">
-                <a href="/profile?user_id=${user?.id}" class="font-semibold text-white text-sm hover:underline">${username}</a>
+                <a href="/profile?user_id=${user?.id}" class="font-semibold text-white text-sm hover:underline">${escapeHtml(username)}</a>
                 <p class="text-gray-400 text-xs">${formattedDate}</p>
             </div>
             ${optionsButton}

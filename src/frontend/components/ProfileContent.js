@@ -15,7 +15,7 @@
 
 import { user } from "../js/Auth.js";
 import Photo from "../js/Photo.js";
-import { getCookie, goTo } from "../js/Utils.js";
+import { getCookie, goTo, escapeHtml } from "../js/Utils.js";
 import { showToast } from "./Toast.js";
 import User from "../js/User.js";
 import { abortController } from "../js/Router.js";
@@ -36,7 +36,7 @@ export async function renderPhotoCard(photo) {
     element.dataset.photoId = photo.id;
     
     element.innerHTML = /*html*/`
-        <img src="${window.env.APP_URL}index.php/uploads?image=${photo.file_name}" alt="Photo by ${photo.user_id}" class="w-full h-full object-cover">
+        <img src="${window.env.UPLOADS_URL}/${photo.file_name}" alt="${escapeHtml(photo.description?.slice(0, 20) || '')}" class="w-full h-full object-cover">
         <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-75 transition-opacity duration-300">
             <div class="flex items-center text-white text-lg font-semibold mx-2 gap-1">
                 <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart ${isLiked ? 'text-red-500' : 'text-white'}"></i>

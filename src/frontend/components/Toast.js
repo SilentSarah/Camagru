@@ -17,6 +17,8 @@
  * Toast Component
  * Displays a toast notification with support for presets and custom icons.
  */
+import { escapeHtml } from '../js/Utils.js';
+
 const ToastContainerId = 'toast-container';
 
 function getToastContainer() {
@@ -83,7 +85,7 @@ export function showToast(message, type = 'info', customIcon = null) {
     <div class="flex-shrink-0">
             ${iconHtml}
         </div>
-        <span class="text-sm font-medium">${message}</span>
+        <span class="text-sm font-medium">${escapeHtml(message)}</span>
         <button class="ml-auto hover:opacity-75 focus:outline-none transition-opacity">
             <i class="fa-solid fa-xmark"></i>
         </button>

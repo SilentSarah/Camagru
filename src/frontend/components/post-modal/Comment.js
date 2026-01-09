@@ -13,7 +13,7 @@
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
-import { formatTimestamp } from "../../js/Utils.js";
+import { formatTimestamp, escapeHtml } from "../../js/Utils.js";
 
 /**
  * Comment - Displays a single comment
@@ -35,12 +35,12 @@ export default function Comment({ id, user, text, timestamp, showReplyButton = f
     return /*html*/`
         <div class="flex gap-3 comment-item group items-start" data-comment-id="${id}">
             <a href="${profileLink}" class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 hover:opacity-80 transition-opacity">
-                <img src="${avatar}" alt="${username}" class="w-full h-full object-cover">
+                <img src="${avatar}" alt="${escapeHtml(username)}" class="w-full h-full object-cover">
             </a>
             <div class="flex-1">
                 <p class="text-sm">
-                    <a href="${profileLink}" class="font-semibold text-white mr-1 hover:underline">${username}</a>
-                    <span class="text-white/90">${text}</span>
+                    <a href="${profileLink}" class="font-semibold text-white mr-1 hover:underline">${escapeHtml(username)}</a>
+                    <span class="text-white/90">${escapeHtml(text)}</span>
                 </p>
                 <div class="flex items-center gap-4 mt-1">
                     <span class="text-gray-400 text-xs">${formatTimestamp(timestamp)}</span>

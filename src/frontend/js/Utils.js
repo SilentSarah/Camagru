@@ -14,7 +14,6 @@
  */
 
 import { InjectAnchors } from "./Router.js";
-import Tooltip from "../components/Tooltip.js";
 
 export function goTo(url, delay = 0) {
     const a = document.createElement('a');
@@ -49,4 +48,23 @@ export function formatTimestamp(dateStr) {
     if (diff < (86400 * 30)) return `${Math.floor(diff / (86400 * 7))}w`;
     if (diff < (86400 * 365)) return `${Math.floor(diff / (86400 * 30))}mo`;
     return `${Math.floor(diff / (86400 * 365))}y`;
+}
+
+export function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+export function stopAllMediaStreams() {
+    document.querySelectorAll('video').forEach(video => {
+        if (video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+        }
+    });
 }

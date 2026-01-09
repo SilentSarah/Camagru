@@ -13,6 +13,8 @@
  * Author: Hicham S.Meftah (hichammeftah4@gmail.com)
  */
 
+import { escapeHtml } from "../../js/Utils.js";
+
 /**
  * PostImage - Displays the main post image
  * @param {Object} props - Component props
@@ -21,7 +23,7 @@
  * @returns {string} HTML string
  */
 export default function PostImage({ imagePath, username }) {
-    const altText = `Post by ${username || 'user'}`;
+    const altText = `Post by ${escapeHtml(username || 'user')}`;
 
     return /*html*/`
         <div id="post-image-container" class="flex items-center justify-center bg-black min-w-[300px] min-h-[300px] lg:min-h-[500px] relative overflow-hidden">
