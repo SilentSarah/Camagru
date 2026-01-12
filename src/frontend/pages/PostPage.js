@@ -354,7 +354,7 @@ export default async function PostPage() {
                 confirmText: 'Delete',
                 onConfirm: async () => {
                     try {
-                        const response = await apiFetch(`${window.env.APP_URL}delete-comment?id=${commentId}`, {
+                        const response = await apiFetch(`${window.env.APP_URL}/delete-comment?id=${commentId}`, {
                             method: 'DELETE',
                             credentials: 'include',
                             headers: {
@@ -431,7 +431,7 @@ export default async function PostPage() {
                         confirmText: 'Delete',
                         onConfirm: async () => {
                             try {
-                                const response = await apiFetch(`${window.env.APP_URL}delete-post?id=${photo.id}`, {
+                                const response = await apiFetch(`${window.env.APP_URL}/delete-post?id=${photo.id}`, {
                                     method: 'DELETE',
                                     credentials: 'include',
                                     headers: {

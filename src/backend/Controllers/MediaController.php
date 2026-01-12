@@ -477,14 +477,14 @@ class MediaController
 
             $user = new User();
             $user->find($_SESSION["user"]);
-            $user->setProfilePicUrl(gen_server_url() . "/uploads/" . $file_name . "." . $ext);
+            $user->setProfilePicUrl(Config::UPLOADS_URL() . "/" . $file_name . "." . $ext);
             $user->save();
 
             log_stuff($user->getProfilePicUrl());
 
             $response = new HttpResponse(200, "OK", [
                 "message" => "Profile picture updated",
-                "profile_pic_url" => gen_server_url() . "/uploads/" . $file_name . "." . $ext
+                "profile_pic_url" => Config::UPLOADS_URL() . "/" . $file_name . "." . $ext
             ]);
             $response->sendJson();
         } catch (Exception $e) {

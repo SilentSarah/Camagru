@@ -21,9 +21,10 @@ function isSecure()
     return !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443;
 }
 
+
 function gen_server_url()
 {
-    return (isSecure() ? "https" : "http") . "://" . Config::APP_URL();
+    return (isSecure() || Config::USE_SSL() ? "https" : "http") . "://" . Config::APP_URL();
 }
 
 

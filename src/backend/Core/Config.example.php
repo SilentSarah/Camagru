@@ -65,6 +65,17 @@ class Config
     {
         return getenv("APP_URL");
     }
+
+    public static function USE_SSL()
+    {
+        return getenv("USE_SSL") ? true : false;
+    }
+
+    public static function UPLOADS_URL()
+    {
+        return getenv("UPLOADS_URL");
+    }
+
     public const ALLOWED_MIME_TYPES = [
         'image/jpeg',
         'image/png',
