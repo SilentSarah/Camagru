@@ -7,7 +7,7 @@ services:
     env_file:
       - .env
     ports:
-      - "80:80"
+      - "3001:3001"
     volumes:
       - uploads:/var/www/html/uploads:rw
     depends_on:
