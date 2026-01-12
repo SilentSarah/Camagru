@@ -107,6 +107,7 @@ class NotificationMailer
         string $commentSection,
         string $postLink
     ): void {
+        $logo = Config::FRONTEND_URL() . "/public/CG.svg";
         $request = new Request(Config::MAILGUN_API_URL() . Config::MAILGUN_SENDER_DOMAIN() . "/messages", "POST");
         $request->includeHeader("Content-Type", "application/json");
         $request->setCurlOption(CURLOPT_USERPWD, Config::MAILGUN_USER() . ":" . Config::MAILGUN_API_KEY());
@@ -116,6 +117,7 @@ class NotificationMailer
             "subject" => $subject,
             "html" => sprintf(
                 Config::$POST_NOTIFICATION_EMAIL,
+                $logo,
                 $title,           // %s - Title
                 $actorName,       // %s - Actor name
                 $action,          // %s - Action text

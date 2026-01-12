@@ -32,6 +32,7 @@ function sendVerifcationMail(User $user)
     $user->save();
 
     $vlink = Config::FRONTEND_URL() . "/verify?token=" . $user->getVerificationToken();
+    $logo = Config::FRONTEND_URL() . "/public/CG.svg";
 
     $request = new Request(Config::MAILGUN_API_URL() . Config::MAILGUN_SENDER_DOMAIN() . "/messages", "POST");
     $request->includeHeader("Content-Type", "application/json");
@@ -40,7 +41,7 @@ function sendVerifcationMail(User $user)
         "from" => Config::MAILGUN_SENDER_FROM(),
         "to" => $user->getEmail(),
         "subject" => "Camagru - Verify your email address",
-        "html" => sprintf(Config::$VERIFICATION_EMAIL, $vlink, $vlink, $vlink)
+        "html" => sprintf(Config::$VERIFICATION_EMAIL, $logo, $vlink, $vlink, $vlink)
     ]);
     $request->fetch();
 }
@@ -53,6 +54,7 @@ function sendPasswordRecoveryEmail(User $user)
     $user->setResetTokenExpires($r_expires);
     $user->save();
 
+    $logo = Config::FRONTEND_URL() . "/public/CG.svg";
     $rlink = Config::FRONTEND_URL() . "/reset-password?token=" . $user->getResetToken();
 
     $request = new Request(Config::MAILGUN_API_URL() . Config::MAILGUN_SENDER_DOMAIN() . "/messages", "POST");
@@ -62,7 +64,7 @@ function sendPasswordRecoveryEmail(User $user)
         "from" => Config::MAILGUN_SENDER_FROM(),
         "to" => $user->getEmail(),
         "subject" => "Camagru - Reset your password",
-        "html" => sprintf(Config::$RESET_PASSWORD_EMAIL, $rlink, $rlink, $rlink)
+        "html" => sprintf(Config::$RESET_PASSWORD_EMAIL, $logo, $rlink, $rlink, $rlink)
     ]);
     $request->fetch();
 }
