@@ -1,104 +1,70 @@
 <?php
-
-# MAKE SURE TO RENAME THIS FILE TO Config.php after you finish with your edits
-
-/**
- * @property string $DB_HOST Database host
- * @property string $DB_NAME Database name
- * @property string $DB_USER Database user
- * @property string $DB_PASS Database password
- * @property array $ALLOWED_ORIGINS Array of allowed origins - CORS
- * @property array $ALLOWED_METHODS Array of allowed HTTP methods - CORS
- * @property array $ALLOWED_HEADERS Array of allowed headers - CORS
- * @property bool $ALLOW_CREDENTIALS Whether to allow credentials - CORS
- * @property string $JWT_SECRET JWT secret
- * @property string $MAILGUN_USER Mailgun username (it's usually "api")
- * @property string $MAILGUN_API_KEY Mailgun API key
- * @property string $MAILGUN_SENDER_DOMAIN Mailgun sender domain
- * @property string $MAILGUN_SENDER_FROM Mailgun sender from
- * @property string $MAILGUN_API_URL Mailgun API URL
- * @property int $VERIFICATION_EXPIRY_TIME Verification expiry time in seconds
- * @property string $FRONTEND_URL Frontend URL
- * @property array $ALLOWED_MIME_TYPES Array of allowed MIME types
- * @property int $MAX_FILE_SIZE Maximum file size in bytes
- * @property int $MIN_DIMENSION Minimum dimension in pixels
- * @property int $MAX_DIMENSION Maximum dimension in pixels
- * @property int $MAX_DESCRIPTION_LENGTH Maximum description length
- * @property string $UPLOAD_DIR Upload directory
- * @property string $TEMP_DIR Temporary directory
- * @property int $RATE_LIMIT_WINDOW Rate limit window in seconds
- * @property array $VALIDATION_RULES Validation rules
- */
 class Config
 {
-    // Database - reads from Docker env vars with fallbacks
-    public static function DB_HOST(): string
+    public static function DB_HOST()
     {
-        return getenv('DB_HOST') ?: 'localhost';
+        return getenv("DB_HOST");
     }
-    public static function DB_NAME(): string
+    public static function DB_NAME()
     {
-        return getenv('DB_NAME') ?: 'CAMAGRU';
+        return getenv("DB_NAME");
     }
-    public static function DB_USER(): string
+    public static function DB_USER()
     {
-        return getenv('DB_USER') ?: 'root';
+        return getenv("DB_USER");
     }
-    public static function DB_PASS(): string
+    public static function DB_PASS()
     {
-        return getenv('DB_PASSWORD') ?: 'root';
+        return  getenv("DB_PASS");
     }
-
-    // CORS
-    public static function ALLOWED_ORIGINS(): array
+    public static function ALLOWED_ORIGINS()
     {
-        $origins = getenv('ALLOWED_ORIGINS');
-        return $origins ? explode(',', $origins) : ['http://localhost'];
+        return explode(",", getenv("ALLOWED_ORIGINS"));
     }
-    public const ALLOWED_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'];
-    public const ALLOWED_HEADERS = [];
+    public static function ALLOWED_METHODS()
+    {
+        return explode(",", getenv("ALLOWED_METHODS")) ?: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'];
+    }
     public const ALLOW_CREDENTIALS = true;
 
-    // App URL (used for generating server URLs)
-    public static function APP_URL(): string
+    public static function ALLOWED_HEADERS()
     {
-        return getenv('APP_URL') ?: 'localhost';
+        return explode(",", getenv("ALLOWED_HEADERS")) ?: ["Retry-After"];
     }
 
-    // Auth
-    public static function JWT_SECRET(): string
+    public static function JWT_SECRET()
     {
-        return getenv('JWT_SECRET') ?: 'your-secret-key-change-me';
+        return getenv("JWT_SECRET") ?: "your-jwt-secret";
     }
-
-    // Mailgun
-    public static function MAILGUN_USER(): string
+    public static function MAILGUN_USER()
     {
-        return getenv('MAILGUN_USER') ?: 'api';
-    }
-    public static function MAILGUN_API_KEY(): string
+        return getenv("MAILGUN_USER") ?: "api";
+    } // From their docs idk why it's called "api"
+    public static function MAILGUN_API_KEY()
     {
-        return getenv('MAILGUN_API_KEY') ?: '';
+        return getenv("MAILGUN_API_KEY");
     }
-    public static function MAILGUN_SENDER_DOMAIN(): string
+    public static function MAILGUN_SENDER_DOMAIN()
     {
-        return getenv('MAILGUN_SENDER_DOMAIN') ?: '';
+        return getenv("MAILGUN_SENDER_DOMAIN");
     }
-    public static function MAILGUN_SENDER_FROM(): string
+    public static function MAILGUN_SENDER_FROM()
     {
-        return getenv('MAILGUN_SENDER_FROM') ?: '';
+        return getenv("MAILGUN_SENDER_FROM");
     }
-    public static function MAILGUN_API_URL(): string
+    public static function MAILGUN_API_URL()
     {
-        return getenv('MAILGUN_API_URL') ?: '';
+        return getenv("MAILGUN_API_URL") ?: "http://api.eu.mailgun.net/v3/";
     }
-
     public const VERIFICATION_EXPIRY_TIME = 900;
-    public static function FRONTEND_URL(): string
+    public static function FRONTEND_URL()
     {
-        return getenv('FRONTEND_URL') ?: 'http://localhost';
+        return getenv("FRONTEND_URL");
     }
-
+    public static function APP_URL()
+    {
+        return getenv("APP_URL");
+    }
     public const ALLOWED_MIME_TYPES = [
         'image/jpeg',
         'image/png',
@@ -106,43 +72,79 @@ class Config
         'image/webp'
     ];
 
-    public const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    // Image constraints
+    public const MAX_FILE_SIZE = 10_000_000; // 10MB
     public const MIN_DIMENSION = 100;
     public const MAX_DIMENSION = 4096;
     public const MAX_DESCRIPTION_LENGTH = 128;
     public const UPLOAD_DIR = '/var/www/html/uploads/';
+
+    /**
+     * 
+     * @deprecated No longer saving temporary proccessed images
+     */
     public const TEMP_DIR = '/var/www/html/uploads/temp/';
 
-    public const SUPPORTED_IMAGE_MIME_TYPES = [
+    public const array SUPPORTED_IMAGE_MIME_TYPES = [
         'image/jpeg',
         'image/png',
         'image/gif',
-        'image/webp'
+        'image/webp',
+        'image/bmp',
+        'image/tiff',
+        'image/x-icon',
+        'image/heic',
+        'image/heif',
+        'image/avif',
+        'image/apng'
     ];
 
     public const RATE_LIMIT_WINDOW = 60;
-    public const RATE_LIMIT_PUBLIC = 20;
+    public const RATE_LIMIT_PUBLIC = 150;
+
     public const RATE_LIMIT_WRITE = 30;
     public const RATE_LIMIT_READ = 100;
 
+    public static array $VALIDATION_RULES = [
+        "username" => [
+            "required" => true,
+            "minlength" => 3,
+            "maxlength" => 24,
+            "includeAlpha" => true,
+        ],
+        "password" => [
+            "required" => true,
+            "minlength" => 8,
+            "maxlength" => 20,
+            "symbols" => true,
+            "includeAlpha" => true,
+            "includeNumber" => true
+        ],
+        "fullname" => [
+            "required" => true,
+            "minlength" => 3,
+            "maxlength" => 50,
+            "includeAlpha" => true,
+        ],
+        "email" => [
+            "required" => true,
+            "minlength" => 5,
+            "maxlength" => 100,
+            "verify" => null,
+        ],
+    ];
+
+    public static string $VERIFICATION_EMAIL = "";
+    public static string $RESET_PASSWORD_EMAIL = "";
+    public static string $POST_NOTIFICATION_EMAIL = "";
+
+
     /**
-     * keys that will be checked against the rules
-     * for more information please visit Validation.php file
-     * Example usage:
-     * ```js
-     * const VALIDATION_RULES = [
-     *      "username" => [
-     *          "required" => true,
-     *          "minlength" => 3,
-     *          "maxlength" => 20,
-     *          "symbols" => true,
-     *          "includeAlpha" => true,
-     *          "includeNumber" => true
-     *      ],
-     * ]
-     * ```
+     * inserts a custom validation function for your desired key
+     * @param string $key The key that will house the validation function
+     * @param mixed $verifyFn Callable to the custom validation function
+     * @return void
      */
-    public static $VALIDATION_RULES = [];
     public static function setValidatorVerifyFn(string $key, $verifyFn): void
     {
         self::$VALIDATION_RULES[$key]["verify"] = $verifyFn;
@@ -151,6 +153,11 @@ class Config
     public static function setVerificationEmailTemplate(string $path): void
     {
         self::$VERIFICATION_EMAIL = file_get_contents($path);
+    }
+
+    public static function setPasswordResetEmailTemplate(string $path): void
+    {
+        self::$RESET_PASSWORD_EMAIL = file_get_contents($path);
     }
 
     public static function setPostEmailTemplate(string $path): void

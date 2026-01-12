@@ -26,6 +26,8 @@ WORKDIR /var/www/html
 
 COPY src/backend ./src/backend
 
+RUN cp ./src/backend/Core/Config.example.php ./src/backend/Core/Config.php
+
 RUN mkdir -p ./uploads && chown -R www-data:www-data ./uploads
 
 RUN chown -R www-data:www-data /var/www/html
