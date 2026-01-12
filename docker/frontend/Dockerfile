@@ -5,8 +5,8 @@ WORKDIR /build
 COPY src/frontend ./src/frontend
 
 RUN apt-get update && apt-get install -y curl ca-certificates && \
-    curl -sL https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64 -o tailwindcss && \
-    chmod +x tailwindcss && \
+    curl -sL https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-arm64 -o tailwindcss && \
+    chmod a+x tailwindcss && \
     ./tailwindcss -i ./src/frontend/index.css -o ./src/frontend/style.css --minify
 
 FROM nginx:alpine
