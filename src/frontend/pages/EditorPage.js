@@ -340,6 +340,9 @@ function attachEventListeners(container) {
     let hasModifications = false; 
     let pendingImageUrl = null;   
     let pendingRawImageUrl = null; 
+    let originalFileBlob = null;
+    let originalFileMimeType = null;
+ 
 
     const cameraVideo = container.querySelector('#camera-video');
     const canvasContainer = container.querySelector('#canvas-container');
@@ -927,6 +930,8 @@ function attachEventListeners(container) {
     uploadInput.onchange = (e) => {
         const file = e.target.files[0];
         if (file && file.type.startsWith('image/')) {
+            originalFileBlob = file;
+            originalFileMimeType = file.type;
             const reader = new FileReader();
             reader.onload = (evt) => {
                 showImageMode(evt.target.result);
@@ -1079,9 +1084,10 @@ function attachEventListeners(container) {
                 scale: (128 * (s.scale || 1)) / (stickerLayer.offsetWidth || 500)
             }));
             
-            let finalImageUrl = pendingImageUrl;
+            let finalBlob;
+            let fileName;
             
-            if (stickersData.length > 0 || currentFilter !== 'none') {
+            if ((stickersData.length > 0 || currentFilter !== 'none') && currentMode === 'image') {
                 const processFormData = new FormData();
                 processFormData.append('image', pendingRawImageUrl);
                 processFormData.append('filter', currentFilter);
@@ -1101,15 +1107,27 @@ function attachEventListeners(container) {
                 if (processRes.ok) {
                     const processResult = await processRes.json();
                     if (processResult.image) {
-                        finalImageUrl = processResult.image;
+                        finalBlob = await apiFetch(processResult.image).then(r => r.blob());
+                        const extension = processResult.image.split(";").shift().split("/").pop() || 'png';
+                        fileName = `post-${Date.now()}.${extension}`;
+                    } else {
+                        throw new Error('Processing failed');
                     }
+                } else {
+                    throw new Error('Processing failed');
                 }
+            } else if (originalFileBlob && currentMode === 'image') {
+                finalBlob = originalFileBlob;
+                const extension = originalFileMimeType.split('/')[1] || 'png';
+                fileName = `post-${Date.now()}.${extension}`;
+            } else {
+                finalBlob = await apiFetch(pendingImageUrl).then(r => r.blob());
+                const extension = pendingImageUrl.split(";").shift().split("/").pop() || 'png';
+                fileName = `post-${Date.now()}.${extension}`;
             }
             
-            const blob = await apiFetch(finalImageUrl).then(r => r.blob());
             const uploadFormData = new FormData();
-            const extension = finalImageUrl.split(";").shift().split("/").pop() || 'png';
-            uploadFormData.append('image', blob, `post-${Date.now()}.${extension}`);
+            uploadFormData.append('image', finalBlob, fileName);
             uploadFormData.append('description', captionInput.value.trim());
             
             const uploadRes = await apiFetch(`${window.env.APP_URL}/upload-post`, {
@@ -1131,6 +1149,8 @@ function attachEventListeners(container) {
             shareView.classList.add('hidden');
             shareView.classList.remove('flex');
             clearStickers();
+            originalFileBlob = null;
+            originalFileMimeType = null;
             goTo('/profile');
             
         } catch (e) {
