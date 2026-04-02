@@ -47,6 +47,11 @@ services:
   adminer:
     image: adminer
     container_name: camagru_dbclient
+    ports:
+      - "8080:8080"
+    networks:
+      - app_network
+
 
 volumes:
   db_data:
