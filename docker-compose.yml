@@ -44,6 +44,10 @@ services:
     networks:
       - app_network
 
+  adminer:
+    image: adminer
+    container_name: camagru_dbclient
+
 volumes:
   db_data:
     driver: local
